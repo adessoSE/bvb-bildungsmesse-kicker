@@ -10,8 +10,6 @@ namespace Kicker.UI
 		
 		public static Factory<T> Scene<T>() where T : class
 		{
-			var low = "player"
-			
 			var lazy = new Lazy<PackedScene>(() => ResourceLoader.Load<PackedScene>($"res://src/{typeof(T).Name}.tscn"));
 			return initAction =>
 			{
