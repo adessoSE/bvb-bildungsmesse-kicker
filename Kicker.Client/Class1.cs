@@ -48,4 +48,16 @@ public static class KickerClient
         Client.SendCommand(GameCommand.NewMove(new Player(Team.Team1, 1), Direction.Right));
         Thread.Sleep(200);
     }
+
+    public static void MoveDown()
+    {
+        Client.SendCommand(GameCommand.NewMove(new Player(Team.Team1, 1), Direction.Down));
+        Thread.Sleep(200);
+    }
+
+    public static void MoveUp()
+    {
+        Client.SendCommand(GameCommand.NewMove(new Player(Team.Team1, 1), Direction.Up));
+        Thread.Sleep(200);
+    }
 }
