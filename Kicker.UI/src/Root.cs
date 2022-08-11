@@ -24,7 +24,7 @@ public class Root : Node2D
 		base.Dispose(disposing);
 		_subscription?.Dispose();
 	}
-
+	
 	public override void _Ready()
 	{
 		if (Engine.EditorHint)
