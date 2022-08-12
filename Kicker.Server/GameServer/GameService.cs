@@ -12,7 +12,7 @@ public class GameService
     private Game.Game _game;
     private Game.GameState _currentState;
     private Subject<Game.GameNotification> _subject;
-    private IObservable<Game.GameNotification> _observable;
+    private IObservable<Game.GameNotification>? _observable;
 
     public GameService()
     {
@@ -36,7 +36,7 @@ public class GameService
     private async Task<Game.MoveResult> Update(Func<Game.Game, Game.MoveResult> update)
     {
         Game.MoveResult? result;
-        
+        await Task.CompletedTask;
         lock (_syncLock)
         {
             result = update(_game);

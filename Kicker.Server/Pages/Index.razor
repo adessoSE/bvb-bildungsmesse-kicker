@@ -1,9 +1,15 @@
 ﻿@page "/"
+@using Kicker.Server.GameServer
+@inject GameService service
 
-<PageTitle>Index</PageTitle>
+<PageTitle>admin tool</PageTitle>
 
-<h1>Hello, world!</h1>
+<button class="btn btn-primary" @onclick="OnResetClicked">reset game</button>
 
-Welcome to your new app.
+@code {
+    private void OnResetClicked()
+    {
+        service.Reset();
+    }
 
-<SurveyPrompt Title="How is Blazor working for you?"/>
+}
