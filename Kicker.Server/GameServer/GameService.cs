@@ -66,6 +66,15 @@ public class GameService
             Notify(Game.GameNotification.NewState(_currentState));
         }
     }
+    public void Reset(GameSettings settings)
+    {
+        lock (_syncLock)
+        {
+            _game = Game.create(settings);
+            _currentState = Game.getState(_game);
+            Notify(Game.GameNotification.NewState(_currentState));
+        }
+    }
 
     public void Subscribe(ChannelWriter<Game.GameNotification> writer, CancellationToken cancellationToken)
     {

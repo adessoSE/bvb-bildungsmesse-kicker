@@ -1,6 +1,5 @@
 extends Button
 
-
 func _on_Play_pressed() -> void:
 	var parent = get_parent();
 	
