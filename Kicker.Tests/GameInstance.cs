@@ -1,22 +1,22 @@
 using System.Text;
 using Kicker.Domain;
-using Xunit.Abstractions;
+using static Kicker.Domain.GameModule;
 
 namespace Kicker.Tests;
 
 internal class GameInstance
 {
     private readonly ITestOutputHelper _output;
-    private readonly Lazy<Game.Game> _lazyGame;
+    private readonly Lazy<Game> _lazyGame;
     private GameSettings? _settings;
-    private Game.Game Game => _lazyGame.Value;
+    private Game Game => _lazyGame.Value;
 
-    public Game.CommandResult? LastResult { get; private set; }
+    public CommandResult? LastResult { get; private set; }
     
     public GameInstance(ITestOutputHelper output)
     {
         _output = output;
-        _lazyGame = new Lazy<Game.Game>(() => Domain.Game.create(_settings ?? GameSettings.defaultSettings));
+        _lazyGame = new Lazy<Game>(() => create(_settings ?? GameSettings.defaultSettings));
     }
 
     public GameInstance Configure(GameSettings? settings)
@@ -25,29 +25,27 @@ internal class GameInstance
         return this;
     }
 
-    public GameInstance Move(Game.Player player, params Game.Direction[] directions)
+    public GameInstance Move(Player player, params Direction[] directions)
     {
         foreach (var direction in directions)
         {
-            LastResult = Domain.Game.processCommand(Domain.Game.GameCommand.NewMove(player, direction), Game);
+            LastResult = processCommand(GameCommand.NewMove(player, direction), Game);
         }
 
+        return this;
+    }
+    
+    public GameInstance Kick(Player player)
+    { 
+        LastResult = processCommand(GameCommand.NewKick(player), Game);
         return this;
     }
 
     public GameInstance Print()
     {
-        var state = Domain.Game.getState(Game);
+        var state = getState(Game);
         var settings = state.Settings;
-        var field = new string?[settings.FieldWidth, settings.FieldHeight];
-        foreach (var player in state.Players)
-        {
-            field[player.Position.Item1, player.Position.Item2] = 
-                $" {(player.Player.Team == Domain.Game.Team.Team1 ? '1' : '2')}{player.Player.Number} ";
-        }
-
-        field[state.BallPosition.Item1, state.BallPosition.Item2] = " [] ";
-
+        
         void DrawBorder(char left, char seperator, char right)
         {
             var upperBorder = new StringBuilder();
@@ -75,8 +73,16 @@ internal class GameInstance
             b.Append('\x2502');
             for (var col = 0; col < settings.FieldWidth; col++)
             {
-                var value = field[col, row];
-                b.Append(value ?? "    ");
+                var value = get(col, row, Game);
+                var s = value switch
+                {
+                    TileValue.PlayerTile player => $" {(player.Item.Team == Team.Team1 ? '1' : '2')}{player.Item.Number} ",
+                    var ball when ball.IsBallTile => " [] ",
+                    var x when x.IsOutTile => " XX ",
+                    _ => "    "
+                };
+                
+                b.Append(s);
                 b.Append('\x2502');
             }
 

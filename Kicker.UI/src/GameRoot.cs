@@ -1,7 +1,7 @@
 using System;
 using System.Linq;
 using Godot;
-using static Kicker.Domain.Game;
+using Kicker.Domain;
 
 namespace Kicker.UI
 {
@@ -10,13 +10,13 @@ namespace Kicker.UI
 	{
 		private static readonly Load.Factory<GameRoot> Factory = Load.Scene<GameRoot>();
 
-		public static GameRoot Create(GameState state, IObservable<MoveResult> moveObservable) => Factory(g =>
+		public static GameRoot Create(GameState state, IObservable<CommandResult> moveObservable) => Factory(g =>
 		{
 			g._initialState = state;
 			g._moveObservable = moveObservable;
 		});
 
-		private void OnMove(MoveResult moveResult)
+		private void OnMove(CommandResult moveResult)
 		{
 			ProcessResult(moveResult);
 		}
@@ -55,16 +55,8 @@ namespace Kicker.UI
 			_subscription = _moveObservable.Subscribe(OnMove);
 		}
 
-		private readonly (string, Direction)[] _directionMap = 
-		{
-			("ui_up", Direction.Up),
-			("ui_down", Direction.Down),
-			("ui_right", Direction.Right),
-			("ui_left", Direction.Left),
-		};
-
 		private GameState _initialState;
-		private IObservable<MoveResult> _moveObservable;
+		private IObservable<CommandResult> _moveObservable;
 
 		private static int GetY(MovedObject movedObject) =>
 			movedObject switch
@@ -74,31 +66,11 @@ namespace Kicker.UI
 				_ => 0
 			};
 		
-		public override void _Input(InputEvent @event)
-		{
-			// var direction = _directionMap
-			//     .Where(x => @event.IsActionPressed(x.Item1))
-			//     .Select(x => (Direction?) x.Item2)
-			//     .FirstOrDefault();
-			//
-			// if (direction != null)
-			// {
-			//     var result = move(new Domain.Game.Player(Team.Team1, 1), direction.Value, _game);
-			//     ProcessResult(result);
-			// }
-			//
-			// if (@event.IsActionPressed("ui_select"))
-			// {
-			//     var result = kick(new Domain.Game.Player(Team.Team1, 1), _game);
-			//     ProcessResult(result);
-			// }
-		}
-
-		private void ProcessResult(MoveResult result)
+		private void ProcessResult(CommandResult result)
 		{
 			switch (result)
 			{
-				case MoveResult.Moved moved:
+				case CommandResult.Moved moved:
 					var objects = moved.Item;
 					var z = 0;
 					foreach (var movedObject in objects.OrderBy(GetY).ThenBy(x => x.IsMovedPlayer ? 1 : 0))

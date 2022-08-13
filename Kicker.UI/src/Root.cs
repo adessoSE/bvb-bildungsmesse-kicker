@@ -1,5 +1,4 @@
 using System;
-using System.Diagnostics;
 using System.Net.Http;
 using System.Reactive.Concurrency;
 using System.Reactive.Disposables;
@@ -12,246 +11,201 @@ using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 
-namespace Kicker.UI;
-
-[Tool]
-public class Root : Node2D
+namespace Kicker.UI
 {
-	private IDisposable _subscription;
+	[Tool]
+	public class Root : Node2D
+	{
+		private IDisposable _subscription;
 
-	protected override void Dispose(bool disposing)
-	{
-		base.Dispose(disposing);
-		_subscription?.Dispose();
-	}
-	
-	public override void _Ready()
-	{
-		if (Engine.EditorHint)
+		protected override void Dispose(bool disposing)
 		{
-			InitializeGame(new Game.GameState(GameSettings.defaultSettings,
-				new[] {new Game.PlayerState(new Tuple<int, int>(3, 3), new Game.Player(Game.Team.Team1, 1))},
-				new Tuple<int, int>(5, 5)), Observable.Empty<Game.MoveResult>());
-
-			return;
+			base.Dispose(disposing);
+			_subscription?.Dispose();
 		}
 
-		var connectionEvents = Connect();
-		var moveNotifications =
-			connectionEvents
-				.OfType<ConnectionEvent.Notification>()
-				.Select(n => n.Payload)
-				.OfType<Game.GameNotification.MoveNotification>()
-				.Select(m => m.Item);
-
-		void OnNext(IConnectionEvent x)
+		public override void _Ready()
 		{
-			switch (x)
+			if (Engine.EditorHint)
 			{
-				case ConnectionEvent.Notification {Payload: Game.GameNotification.State state}:
+				InitializeGame(new GameState(
+						GameSettings.defaultSettings,
+						new[] {new PlayerState(new Tuple<int, int>(3, 3), new Domain.Player(Team.Team1, 1))},
+						new Tuple<int, int>(5, 5), GameStatus.Running),
+					Observable.Empty<CommandResult>());
+
+				return;
+			}
+
+			var connectionEvents = Connect();
+			var moveNotifications =
+				connectionEvents
+					.OfType<ConnectionEvent.Notification>()
+					.Select(n => n.Payload)
+					.OfType<GameNotification.MoveNotification>()
+					.Select(m => m.Item);
+
+			void OnNext(IConnectionEvent x)
+			{
+				switch (x)
 				{
-					RemoveExistingGame();
-					InitializeGame(state.Item, moveNotifications);
-					break;
-				}
-				case ConnectionEvent.Connecting:
-				{
-					RemoveExistingGame();
-					break;
+					case ConnectionEvent.Notification {Payload: GameNotification.State state}:
+					{
+						RemoveExistingGame();
+						InitializeGame(state.Item, moveNotifications);
+						break;
+					}
+					case ConnectionEvent.Connecting:
+					{
+						RemoveExistingGame();
+						break;
+					}
 				}
 			}
+
+			_subscription =
+				connectionEvents
+					.Do(OnNext)
+					.Subscribe();
 		}
 
-		_subscription =
-			connectionEvents
-				.Do(OnNext)
-				.Subscribe();
-	}
-
-	private IObservable<IConnectionEvent> Connect()
-	{
-		var factory = new HubConnectionBuilder()
-			.WithUrl("http://localhost:7014/gamehub")
-			.AddNewtonsoftJsonProtocol()
-			.ConfigureLogging(l => l
-				.SetMinimumLevel(LogLevel.Debug)
-				.AddProvider(new DebugLoggerProvider()))
-			.WithAutomaticReconnect(new AlwaysReconnectPolicy());
-
-		var observable = Observable.Create<IConnectionEvent>(async observer =>
+		private IObservable<IConnectionEvent> Connect()
 		{
-			var connectionCancellationTokenSource = new CancellationTokenSource();
-			var connectionCancellationToken = connectionCancellationTokenSource.Token;
+			var factory = new HubConnectionBuilder()
+				.WithUrl("http://localhost:7014/gamehub")
+				.AddNewtonsoftJsonProtocol()
+				.ConfigureLogging(l => l
+					.SetMinimumLevel(LogLevel.Debug)
+					.AddProvider(new DebugLoggerProvider()))
+				.WithAutomaticReconnect(new AlwaysReconnectPolicy());
 
-			void Subscribe(HubConnection connection)
+			var observable = Observable.Create<IConnectionEvent>(async observer =>
 			{
-				observer.OnNext(new ConnectionEvent.Connected());
+				var connectionCancellationTokenSource = new CancellationTokenSource();
+				var connectionCancellationToken = connectionCancellationTokenSource.Token;
 
-				Observable
-					.Create<Game.GameNotification>(async o =>
-					{
-						var cancellationTokenSource = new CancellationTokenSource();
-						var token = cancellationTokenSource.Token;
-						var channel =
-							await connection.StreamAsChannelAsync<Game.GameNotification>("Subscribe",
-								connectionCancellationToken);
-						_ = Task.Run(async () =>
+				void Subscribe(HubConnection connection)
+				{
+					observer.OnNext(new ConnectionEvent.Connected());
+
+					Observable
+						.Create<GameNotification>(async o =>
 						{
-							while (await channel.WaitToReadAsync(token))
+							var cancellationTokenSource = new CancellationTokenSource();
+							var token = cancellationTokenSource.Token;
+							var channel =
+								await connection.StreamAsChannelAsync<GameNotification>("Subscribe",
+									connectionCancellationToken);
+							_ = Task.Run(async () =>
 							{
-								var next = await channel.ReadAsync(token);
-								o.OnNext(next);
-							}
-						}, token);
+								while (await channel.WaitToReadAsync(token))
+								{
+									var next = await channel.ReadAsync(token);
+									o.OnNext(next);
+								}
+							}, token);
 
-						return Disposable.Create(cancellationTokenSource.Cancel);
-					})
-					.Select(e => new ConnectionEvent.Notification(e))
-					.Subscribe(observer.OnNext);
+							return Disposable.Create(cancellationTokenSource.Cancel);
+						})
+						.Select(e => new ConnectionEvent.Notification(e))
+						.Subscribe(observer.OnNext);
+				}
+
+				var connection = factory.Build();
+
+				connection.Reconnected += _ =>
+				{
+					Subscribe(connection);
+					return Task.CompletedTask;
+				};
+
+				connection.Reconnecting += _ =>
+				{
+					observer.OnNext(new ConnectionEvent.Connecting());
+					return Task.CompletedTask;
+				};
+
+				observer.OnNext(new ConnectionEvent.Connecting());
+
+				while (true)
+					try
+					{
+						await connection.StartAsync(connectionCancellationToken);
+						Subscribe(connection);
+						return Disposable.Create(() =>
+						{
+							connectionCancellationTokenSource.Cancel();
+							connection.StopAsync(CancellationToken.None);
+							connection.DisposeAsync();
+						});
+					}
+					catch (HttpRequestException)
+					{
+						await Task.Delay(TimeSpan.FromSeconds(1), connectionCancellationToken);
+						// Retry
+					}
+			});
+
+			var scheduler = new SynchronizationContextScheduler(SynchronizationContext.Current);
+			return observable.ObserveOn(scheduler).Publish().RefCount();
+		}
+
+		private void RemoveExistingGame()
+		{
+			var game = GetNodeOrNull("ViewportContainer/Viewport/GameRoot");
+			game?.QueueFree();
+		}
+
+		private void InitializeGame(GameState state, IObservable<CommandResult> observable)
+		{
+			var uiSettings = state.Settings.ToUiSettings();
+
+			var viewportSize = uiSettings.FieldPixels;
+			var displaySize = uiSettings.ScaledFieldPixels;
+
+			var container = GetNode<ViewportContainer>("ViewportContainer");
+			var viewport = container.GetNode<Viewport>("Viewport");
+
+			foreach (Node child in viewport.GetChildren())
+			{
+				child.QueueFree();
 			}
 
-			var connection = factory.Build();
+			viewport.Size = viewportSize;
+			container.RectSize = viewportSize;
+			container.RectScale = Vector2.One * UiSettings.PixelFactor;
 
-			connection.Reconnected += s =>
+			var game = GameRoot.Create(state, observable).Named("GameRoot");
+			viewport.AddChild(game);
+
+			if (Engine.EditorHint)
 			{
-				Subscribe(connection);
-				return Task.CompletedTask;
-			};
-
-			connection.Reconnecting += e =>
+			}
+			else
 			{
-				observer.OnNext(new ConnectionEvent.Connecting());
-				return Task.CompletedTask;
-			};
-
-			observer.OnNext(new ConnectionEvent.Connecting());
-
-			while (true)
-				try
-				{
-					await connection.StartAsync(connectionCancellationToken);
-					Subscribe(connection);
-					return Disposable.Create(() =>
-					{
-						connectionCancellationTokenSource.Cancel();
-						connection.StopAsync(CancellationToken.None);
-						connection.DisposeAsync();
-					});
-				}
-				catch (HttpRequestException)
-				{
-					await Task.Delay(TimeSpan.FromSeconds(1), connectionCancellationToken);
-					// Retry
-				}
-		});
-
-		var scheduler = new SynchronizationContextScheduler(SynchronizationContext.Current);
-		return observable.ObserveOn(scheduler).Publish().RefCount();
-	}
-
-	private void RemoveExistingGame()
-	{
-		var game = GetNodeOrNull("ViewportContainer/Viewport/GameRoot");
-		game?.QueueFree();
-	}
-
-	private void InitializeGame(Game.GameState state, IObservable<Game.MoveResult> observable)
-	{
-		var uiSettings = state.Settings.ToUiSettings();
-
-		var viewportSize = uiSettings.FieldPixels;
-		var displaySize = uiSettings.ScaledFieldPixels;
-
-		var container = GetNode<ViewportContainer>("ViewportContainer");
-		var viewport = container.GetNode<Viewport>("Viewport");
-
-		foreach (Node child in viewport.GetChildren())
-		{
-			child.QueueFree();
+				GetTree().SetScreenStretch(SceneTree.StretchMode.Mode2d, SceneTree.StretchAspect.Keep, displaySize);
+			}
 		}
 
-		viewport.Size = viewportSize;
-		container.RectSize = viewportSize;
-		container.RectScale = Vector2.One * UiSettings.PixelFactor;
-
-		var game = GameRoot.Create(state, observable).Named("GameRoot");
-		viewport.AddChild(game);
-
-		if (Engine.EditorHint)
+		private class AlwaysReconnectPolicy : IRetryPolicy
 		{
+			public TimeSpan? NextRetryDelay(RetryContext retryContext)
+			{
+				return TimeSpan.FromSeconds(1);
+			}
 		}
-		else
-		{
-			GetTree().SetScreenStretch(SceneTree.StretchMode.Mode2d, SceneTree.StretchAspect.Keep, displaySize);
-		}
-	}
 
-	public override void _Input(InputEvent @event)
-	{
-		base._Input(@event);
-
-		if (@event.IsActionPressed("ui_1"))
+		private interface IConnectionEvent
 		{
 		}
 
-		if (@event.IsActionPressed("ui_2"))
+		private static class ConnectionEvent
 		{
-		}
+			public record Connecting : IConnectionEvent;
 
-		if (@event.IsActionPressed("ui_3"))
-		{
-		}
-	}
+			public record Connected : IConnectionEvent;
 
-	private class AlwaysReconnectPolicy : IRetryPolicy
-	{
-		public TimeSpan? NextRetryDelay(RetryContext retryContext)
-		{
-			return TimeSpan.FromSeconds(1);
-		}
-	}
-
-	private interface IConnectionEvent
-	{
-	}
-
-	private static class ConnectionEvent
-	{
-		public record Connecting : IConnectionEvent;
-
-		public record Connected : IConnectionEvent;
-
-		public record Notification(Game.GameNotification Payload) : IConnectionEvent;
-	}
-}
-
-public class DebugLoggerProvider : ILoggerProvider
-{
-	public void Dispose()
-	{
-	}
-
-	public ILogger CreateLogger(string categoryName)
-	{
-		return new DebugLogger();
-	}
-
-	public class DebugLogger : ILogger
-	{
-		public void Log<TState>(LogLevel logLevel, EventId eventId, TState state, Exception exception,
-			Func<TState, Exception, string> formatter)
-		{
-			Debug.WriteLine(formatter(state, exception));
-		}
-
-		public bool IsEnabled(LogLevel logLevel)
-		{
-			return true;
-		}
-
-		public IDisposable BeginScope<TState>(TState state)
-		{
-			return null;
+			public record Notification(GameNotification Payload) : IConnectionEvent;
 		}
 	}
 }

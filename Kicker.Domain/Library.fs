@@ -2,96 +2,13 @@
 
 open System
 
-module Utils =
-    let find2D item (arr: 'T [,]) =
-        let rec go x y =
-            if y >= arr.GetLength 1 then
-                None
-            elif x >= arr.GetLength 0 then
-                go 0 (y + 1)
-            elif arr[x, y] = item then
-                Some(x, y)
-            else
-                go (x + 1) y
+type Game =
+    private
+        { Tiles: TileValue [,]
+          Settings: GameSettings
+          mutable Status: GameStatus }
 
-        go 0 0
-
-    let spiral =
-        let rec f (x, y) d m =
-            seq {
-                let mutable x = x
-                let mutable y = y
-
-                while 2 * x * d < m do
-                    yield x, y
-                    x <- x + d
-
-                while 2 * y * d < m do
-                    yield x, y
-                    y <- y + d
-
-                yield! f (x, y) -d (m + 1)
-            }
-
-        f (0, 0) 1 1
-
-type GameSettings =
-    { FieldHeight: int
-      FieldWidth: int
-      GoalHeight: int }
-
-    static member create fieldHeight goalHeight =
-        if fieldHeight % 2 = 0 then failwith "Nur ungerade Höhe ist erlaubt"
-        if goalHeight % 2 = 0 then failwith "Nur ungerade Torhöhe ist erlaubt"
-        
-        let widthToHeightRatio = 1.5441
-        let fieldWidth = int (float fieldHeight * widthToHeightRatio) + 2
-        let fieldWidth' = if fieldWidth % 2 = 0 then fieldWidth else fieldWidth + 1
-        
-        { FieldHeight = fieldHeight
-          FieldWidth = fieldWidth'
-          GoalHeight = goalHeight }
-
-    static member defaultSettings = GameSettings.create 9 3
-    member this.goalTop = (this.FieldHeight - this.GoalHeight) / 2
-    member this.goalBottom = this.goalTop + this.GoalHeight
-
-module Game =
-
-    type Team =
-        | Team1 = 0
-        | Team2 = 1
-
-    type Player = { Team: Team; Number: int }
-
-    type TileValue =
-        | EmptyTile
-        | OutTile
-        | PlayerTile of Player
-        | BallTile
-
-    type GameStatus =
-        | Running
-        | StoppedWithGoal
-    
-    type Game =
-        private
-            { Tiles: TileValue [,]
-              Settings: GameSettings
-              mutable Status: GameStatus }
-    
-    type Coordinate = int * int
-    
-    type PlayerState =
-        { Position: Coordinate
-          Player: Player }
-    
-    type GameState =
-        { Settings: GameSettings
-          Players: PlayerState array
-          BallPosition: Coordinate
-          Status: GameStatus }
-
+module Game =    
     let create (settings: GameSettings) =
         let tiles = Array2D.create settings.FieldWidth settings.FieldHeight EmptyTile
 
@@ -117,12 +34,6 @@ module Game =
 
         { Tiles = tiles; Settings = settings; Status = Running }
 
-    type Direction =
-        | Up = 0
-        | Down = 1
-        | Left = 2
-        | Right = 3
-
     let directions =
         [ Direction.Left
           Direction.Right
@@ -131,24 +42,13 @@ module Game =
 
     let find value { Tiles = tiles } = tiles |> Utils.find2D value
 
-    type MovedObject =
-        | MovedBall of Coordinate
-        | MovedPlayer of Player * Coordinate
-
-    type CommandResult =
-        | Ignored
-        | BlockedByObstacle
-        | PlayerNotFound
-        | Moved of MovedObject list
-        | Goal of (MovedObject list * Player)
-
     let private isValid (col, row) { Game.Settings = settings } =
         0 <= col
         && col < settings.FieldWidth
         && 0 <= row
         && row < settings.FieldHeight
 
-    let private get (col, row) { Tiles = tiles } = tiles[col, row]
+    let get (col, row) { Tiles = tiles } = tiles[col, row]
 
     let private tryGet coordinate game =
         if isValid coordinate game then
@@ -263,9 +163,9 @@ module Game =
                 | _ -> None
             | _ -> None
 
-        let coordinate = game |> find (PlayerTile player)
+        let playerCoord = game |> find (PlayerTile player)
 
-        match coordinate with
+        match playerCoord with
         | Some coordinate ->
             let ball =
                 directions
@@ -302,15 +202,7 @@ module Game =
             game.Status <- StoppedWithGoal
             Goal (moved, player)
         | x -> x
-    
-    type GameCommand =
-        | Move of Player * Direction
-        | Kick of Player
-        
-    type GameNotification =
-        | State of GameState
-        | MoveNotification of CommandResult
-        
+            
     let processCommand command (game: Game) =
         match game.Status with
         | Running ->

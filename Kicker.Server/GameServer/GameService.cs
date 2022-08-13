@@ -1,7 +1,8 @@
-using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using System.Threading.Channels;
 using Kicker.Domain;
+
+using static Kicker.Domain.GameModule;
 
 namespace Kicker.Server.GameServer;
 
@@ -9,20 +10,20 @@ public class GameService
 {
     private readonly object _syncLock = new();
 
-    private Game.Game _game;
-    private Game.GameState _currentState;
-    private Subject<Game.GameNotification> _subject;
-    private IObservable<Game.GameNotification> _observable;
+    private Game _game;
+    private GameState _currentState;
+    private Subject<GameNotification> _subject;
+    private IObservable<GameNotification> _observable;
 
     public GameService()
     {
-        _game = Game.create(GameSettings.defaultSettings);
-        _currentState = Game.getState(_game);
+        _game = create(GameSettings.defaultSettings);
+        _currentState = getState(_game);
 
-        _subject = new Subject<Game.GameNotification>();
+        _subject = new Subject<GameNotification>();
     }
 
-    public Game.GameState CurrentState
+    public GameState CurrentState
     {
         get
         {
@@ -33,45 +34,45 @@ public class GameService
         }
     }
     
-    private async Task<Game.CommandResult> Update(Func<Game.Game, Game.CommandResult> update)
+    private async Task<CommandResult> Update(Func<Game, CommandResult> update)
     {
-        Game.CommandResult? result;
+        CommandResult? result;
         
         lock (_syncLock)
         {
             result = update(_game);
-            _currentState = Game.getState(_game);
-            Notify(Game.GameNotification.NewMoveNotification(result));
+            _currentState = getState(_game);
+            Notify(GameNotification.NewMoveNotification(result));
         }
 
         return result;
     }
 
-    private void Notify(Game.GameNotification notification)
+    private void Notify(GameNotification notification)
     {
         _subject.OnNext(notification);
     }
 
-    public async Task Process(Game.GameCommand command)
+    public async Task Process(GameCommand command)
     {
-        await Update(game => Game.processCommand(command, game));
+        await Update(game => processCommand(command, game));
     }
 
     public void Reset()
     {
         lock (_syncLock)
         {
-            _game = Game.create(_currentState.Settings);
-            _currentState = Game.getState(_game);
-            Notify(Game.GameNotification.NewState(_currentState));
+            _game = create(_currentState.Settings);
+            _currentState = getState(_game);
+            Notify(GameNotification.NewState(_currentState));
         }
     }
 
-    public void Subscribe(ChannelWriter<Game.GameNotification> writer, CancellationToken cancellationToken)
+    public void Subscribe(ChannelWriter<GameNotification> writer, CancellationToken cancellationToken)
     {
         lock (_syncLock)
         {
-             writer.TryWrite(Game.GameNotification.NewState(_currentState));
+             writer.TryWrite(GameNotification.NewState(_currentState));
              IDisposable? subscription = null;
              subscription = _subject.Subscribe(notification =>
              {
