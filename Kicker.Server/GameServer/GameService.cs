@@ -33,9 +33,9 @@ public class GameService
         }
     }
     
-    private async Task<Game.MoveResult> Update(Func<Game.Game, Game.MoveResult> update)
+    private async Task<Game.CommandResult> Update(Func<Game.Game, Game.CommandResult> update)
     {
-        Game.MoveResult? result;
+        Game.CommandResult? result;
         
         lock (_syncLock)
         {
@@ -54,7 +54,7 @@ public class GameService
 
     public async Task Process(Game.GameCommand command)
     {
-        await Update(game => Game.processCommand(command).Invoke(game));
+        await Update(game => Game.processCommand(command, game));
     }
 
     public void Reset()

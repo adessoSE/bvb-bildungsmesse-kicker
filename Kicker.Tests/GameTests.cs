@@ -1,31 +1,33 @@
+using FluentAssertions;
 using Kicker.Domain;
+using Xunit.Abstractions;
+using static Kicker.Domain.Game;
 
 namespace Kicker.Tests;
 
 public class GameTests
 {
+    private readonly GameInstance _game;
+
+    public GameTests(ITestOutputHelper output)
+    {
+        _game = new GameInstance(output);
+    }
+    
     [Fact]
     public void Tor()
     {
-        var player1 = new Game.Player(Game.Team.Team1, 1);
-        
-        var settings = GameSettings.create(9, 3);
-        var game = Game.create(settings);
-        //Game.processCommand(Game.GameCommand.NewMove())
+        var player1 = new Player(Team.Team1, 1);
 
-        var ballPosition = Game.getState(game).BallPosition;
+        _game
+            .Configure(GameSettings.create(9, 3))
+            .Move(player1, Direction.Right, Direction.Right, Direction.Right, Direction.Right, Direction.Right, Direction.Right)
+            .Move(player1, Direction.Down, Direction.Down)
+            .Move(player1, Direction.Left, Direction.Down)
+            .Move(player1, Direction.Right, Direction.Right, Direction.Right, Direction.Right, Direction.Right, Direction.Right, Direction.Right)
+            .Print();
 
-        var result = Game.processCommand(Game.GameCommand.NewMove(player1, Game.Direction.Right)).Invoke(game);
-        result = Game.processCommand(Game.GameCommand.NewMove(player1, Game.Direction.Down)).Invoke(game);
-        result = Game.processCommand(Game.GameCommand.NewMove(player1, Game.Direction.Right)).Invoke(game);
-        result = Game.processCommand(Game.GameCommand.NewMove(player1, Game.Direction.Right)).Invoke(game);
-        result = Game.processCommand(Game.GameCommand.NewMove(player1, Game.Direction.Right)).Invoke(game);
-        result = Game.processCommand(Game.GameCommand.NewMove(player1, Game.Direction.Right)).Invoke(game);
-        result = Game.processCommand(Game.GameCommand.NewMove(player1, Game.Direction.Right)).Invoke(game);
-        result = Game.processCommand(Game.GameCommand.NewMove(player1, Game.Direction.Right)).Invoke(game);
-        result = Game.processCommand(Game.GameCommand.NewMove(player1, Game.Direction.Right)).Invoke(game);
-        var position = Game.getState(game).Players.Single(p => p.Player.Equals(player1)).Position;
-        
-        ballPosition = Game.getState(game).BallPosition;
+        _game.LastResult?.IsGoal.Should().BeTrue();
     }
 }
+

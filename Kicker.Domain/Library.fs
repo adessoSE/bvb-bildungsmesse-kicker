@@ -9,7 +9,7 @@ module Utils =
                 None
             elif x >= arr.GetLength 0 then
                 go 0 (y + 1)
-            elif arr.[x, y] = item then
+            elif arr[x, y] = item then
                 Some(x, y)
             else
                 go (x + 1) y
@@ -41,11 +41,15 @@ type GameSettings =
       GoalHeight: int }
 
     static member create fieldHeight goalHeight =
+        if fieldHeight % 2 = 0 then failwith "Nur ungerade Höhe ist erlaubt"
+        if goalHeight % 2 = 0 then failwith "Nur ungerade Torhöhe ist erlaubt"
+        
         let widthToHeightRatio = 1.5441
         let fieldWidth = int (float fieldHeight * widthToHeightRatio) + 2
-
+        let fieldWidth' = if fieldWidth % 2 = 0 then fieldWidth else fieldWidth + 1
+        
         { FieldHeight = fieldHeight
-          FieldWidth = fieldWidth
+          FieldWidth = fieldWidth'
           GoalHeight = goalHeight }
 
     static member defaultSettings = GameSettings.create 9 3
@@ -87,23 +91,23 @@ module Game =
 
         let addOut col =
             for row in 0 .. settings.goalTop - 1 do
-                tiles.[col, row] <- OutTile
+                tiles[col, row] <- OutTile
 
             for row in settings.goalBottom .. settings.FieldHeight - 1 do
-                tiles.[col, row] <- OutTile
+                tiles[col, row] <- OutTile
 
         addOut 0
         addOut (settings.FieldWidth - 1)
 
-        tiles.[2, 2] <- PlayerTile { Team = Team.Team1; Number = 1 }
-        tiles.[2, 3] <- PlayerTile { Team = Team.Team1; Number = 2 }
-        tiles.[2, 4] <- PlayerTile { Team = Team.Team1; Number = 3 }
+        tiles[2, 2] <- PlayerTile { Team = Team.Team1; Number = 1 }
+        tiles[2, 3] <- PlayerTile { Team = Team.Team1; Number = 2 }
+        tiles[2, 4] <- PlayerTile { Team = Team.Team1; Number = 3 }
 
-        tiles.[11, 2] <- PlayerTile { Team = Team.Team2; Number = 1 }
-        tiles.[11, 3] <- PlayerTile { Team = Team.Team2; Number = 2 }
-        tiles.[11, 4] <- PlayerTile { Team = Team.Team2; Number = 3 }
+        tiles[11, 2] <- PlayerTile { Team = Team.Team2; Number = 1 }
+        tiles[11, 3] <- PlayerTile { Team = Team.Team2; Number = 2 }
+        tiles[11, 4] <- PlayerTile { Team = Team.Team2; Number = 3 }
 
-        tiles.[8, 3] <- BallTile
+        tiles[8, 3] <- BallTile
 
         { Tiles = tiles; Settings = settings }
 
@@ -125,10 +129,11 @@ module Game =
         | MovedBall of Coordinate
         | MovedPlayer of Player * Coordinate
 
-    type MoveResult =
+    type CommandResult =
         | BlockedByObstacle
         | PlayerNotFound
         | Moved of MovedObject list
+        | Goal of (MovedObject list * Player)
 
     let private isValid (col, row) { Game.Settings = settings } =
         0 <= col
@@ -136,7 +141,7 @@ module Game =
         && 0 <= row
         && row < settings.FieldHeight
 
-    let private get (col, row) { Tiles = tiles } = tiles.[col, row]
+    let private get (col, row) { Tiles = tiles } = tiles[col, row]
 
     let private tryGet coordinate game =
         if isValid coordinate game then
@@ -144,7 +149,7 @@ module Game =
         else
             None
 
-    let private set (col, row) value { Tiles = tiles } = tiles.[col, row] <- value
+    let private set (col, row) value { Tiles = tiles } = tiles[col, row] <- value
 
     let private isFree c game =
         isValid c game
@@ -197,7 +202,7 @@ module Game =
 
         for col in 0 .. game.Settings.FieldWidth - 1 do
             for row in 0 .. game.Settings.FieldHeight - 1 do
-                match game.Tiles.[col, row] with
+                match game.Tiles[col, row] with
                 | EmptyTile -> ()
                 | OutTile -> ()
                 | BallTile -> ballPos <- (col, row)
@@ -278,14 +283,25 @@ module Game =
             | _ -> BlockedByObstacle
         | None -> PlayerNotFound
 
+    let private checkGoal player game result =
+        let { Game.Settings = { FieldWidth = width } } = game
+        let ballInGoal = function
+            | MovedBall (col, _) -> col = 0 || col = width - 1
+            | _ -> false
+            
+        match result with
+        | Moved moved when moved |> List.exists ballInGoal -> Goal (moved, player)
+        | x -> x
+    
     type GameCommand =
         | Move of Player * Direction
         | Kick of Player
         
     type GameNotification =
         | State of GameState
-        | MoveNotification of MoveResult
+        | MoveNotification of CommandResult
         
-    let processCommand = function
-        | Move (player, direction) -> move player direction
-        | Kick player -> kick player
+    let processCommand command game =
+        match command with
+        | Move (player, direction) -> move player direction game |> checkGoal player game
+        | Kick player -> kick player game |> checkGoal player game
