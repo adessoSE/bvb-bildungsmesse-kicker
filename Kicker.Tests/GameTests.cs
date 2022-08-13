@@ -28,6 +28,10 @@ public class GameTests
             .Print();
 
         _game.LastResult?.IsGoal.Should().BeTrue();
+
+        _game.Move(player1, Direction.Left);
+
+        _game.LastResult?.IsIgnored.Should().BeTrue();
     }
 }
 

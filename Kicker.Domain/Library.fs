@@ -70,21 +70,27 @@ module Game =
         | PlayerTile of Player
         | BallTile
 
+    type GameStatus =
+        | Running
+        | StoppedWithGoal
+    
     type Game =
         private
             { Tiles: TileValue [,]
-              Settings: GameSettings }
+              Settings: GameSettings
+              mutable Status: GameStatus }
     
     type Coordinate = int * int
     
     type PlayerState =
         { Position: Coordinate
           Player: Player }
-
+    
     type GameState =
         { Settings: GameSettings
           Players: PlayerState array
-          BallPosition: Coordinate }
+          BallPosition: Coordinate
+          Status: GameStatus }
 
     let create (settings: GameSettings) =
         let tiles = Array2D.create settings.FieldWidth settings.FieldHeight EmptyTile
@@ -109,7 +115,7 @@ module Game =
 
         tiles[8, 3] <- BallTile
 
-        { Tiles = tiles; Settings = settings }
+        { Tiles = tiles; Settings = settings; Status = Running }
 
     type Direction =
         | Up = 0
@@ -130,6 +136,7 @@ module Game =
         | MovedPlayer of Player * Coordinate
 
     type CommandResult =
+        | Ignored
         | BlockedByObstacle
         | PlayerNotFound
         | Moved of MovedObject list
@@ -210,7 +217,8 @@ module Game =
 
         { GameState.Settings = game.Settings
           Players = players |> Seq.toArray
-          BallPosition = ballPos }
+          BallPosition = ballPos
+          Status = game.Status }
 
     let private move (player: Player) direction game =
         let coordinate = game |> find (PlayerTile player)
@@ -290,7 +298,9 @@ module Game =
             | _ -> false
             
         match result with
-        | Moved moved when moved |> List.exists ballInGoal -> Goal (moved, player)
+        | Moved moved when moved |> List.exists ballInGoal ->
+            game.Status <- StoppedWithGoal
+            Goal (moved, player)
         | x -> x
     
     type GameCommand =
@@ -301,7 +311,11 @@ module Game =
         | State of GameState
         | MoveNotification of CommandResult
         
-    let processCommand command game =
-        match command with
-        | Move (player, direction) -> move player direction game |> checkGoal player game
-        | Kick player -> kick player game |> checkGoal player game
+    let processCommand command (game: Game) =
+        match game.Status with
+        | Running ->
+            match command with
+            | Move (player, direction) -> move player direction game |> checkGoal player game
+            | Kick player -> kick player game |> checkGoal player game
+        | StoppedWithGoal ->
+            Ignored
