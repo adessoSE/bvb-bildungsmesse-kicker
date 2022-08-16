@@ -202,7 +202,12 @@ module Game =
             game.Status <- StoppedWithGoal
             Goal (moved, player)
         | x -> x
-            
+
+    let adminTogglesGameStatus (game: Game, currentStatus: GameStatus) =
+        match currentStatus with
+            | StoppedWithGoal
+            | _ -> game.Status <- currentStatus
+
     let processCommand command (game: Game) =
         match game.Status with
         | Running ->
@@ -211,3 +216,6 @@ module Game =
             | Kick player -> kick player game |> checkGoal player game
         | StoppedWithGoal ->
             Ignored
+        | StoppedByAdmin ->
+            Ignored
+            

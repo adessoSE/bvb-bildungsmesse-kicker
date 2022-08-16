@@ -35,6 +35,7 @@ type TileValue =
 type GameStatus =
     | Running
     | StoppedWithGoal
+    | StoppedByAdmin
 
 type Coordinate = int * int
 

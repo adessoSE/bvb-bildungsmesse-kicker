@@ -18,6 +18,8 @@
     </div>
 </div>
 
+<button class="btn btn-primary mt-4" @onclick="OnStopGameClicked">@stopButtonContent</button>
+
 @code {
     private void OnResetClicked()
     {
@@ -36,5 +38,14 @@
             fieldHeight = 0;
             if (!isHidden) isHidden = !isHidden;
         } else isHidden = !isHidden;
+    }
+
+    private bool gameRunning = true;
+    private string stopButtonContent = "Spiel stoppen";
+    private void OnStopGameClicked()
+    {
+        gameRunning = !gameRunning;
+        stopButtonContent = gameRunning ? "Spiel stoppen" : "Spiel weiter";
+        service.ToggleGame();
     }
 }

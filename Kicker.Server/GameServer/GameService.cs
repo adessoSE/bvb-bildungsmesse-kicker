@@ -76,6 +76,17 @@ public class GameService
         }
     }
 
+    public void ToggleGame()
+    {
+        lock (_syncLock)
+        {
+            var newGameStatus = _currentState.Status == GameStatus.Running
+                ? GameStatus.StoppedByAdmin
+                : GameStatus.Running;
+            adminTogglesGameStatus(_game, newGameStatus);
+        }
+    }
+
     public void Subscribe(ChannelWriter<GameNotification> writer, CancellationToken cancellationToken)
     {
         lock (_syncLock)
