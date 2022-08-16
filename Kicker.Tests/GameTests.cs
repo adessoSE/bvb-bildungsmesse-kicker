@@ -25,7 +25,7 @@ public class GameTests
     [Fact]
     public void Tor()
     {
-        var player1 = new Player(Team., 1);
+        var player1 = new Player(Team.BVB, 1);
 
         _game
             .Configure(GameSettings.create(9, 3))
