@@ -21,8 +21,7 @@ namespace Kicker.UI
 		
 		public override void _Draw()
 		{
-			if (_settings == null)
-				_settings = GameSettings.defaultSettings.ToUiSettings();
+			_settings ??= GameSettings.defaultSettings.ToUiSettings();
 			
 			DrawTiles();
 			DrawCenterCircle();

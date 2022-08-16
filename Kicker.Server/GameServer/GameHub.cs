@@ -13,14 +13,14 @@ public class GameHub : Hub
         _gameService = gameService;
     }
     
-    public async Task Command(Game.GameCommand command)
+    public async Task Command(GameCommand command)
     {
         await _gameService.Process(command);
     }
     
-    public ChannelReader<Game.GameNotification> Subscribe(CancellationToken cancellationToken)
+    public ChannelReader<GameNotification> Subscribe(CancellationToken cancellationToken)
     {
-        var channel = Channel.CreateUnbounded<Game.GameNotification>();
+        var channel = Channel.CreateUnbounded<GameNotification>();
         var writer = channel.Writer;
         
         _gameService.Subscribe(writer, cancellationToken);
