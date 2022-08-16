@@ -21,8 +21,8 @@ type GameSettings with
     member this.goalBottom = this.goalTop + this.GoalHeight
 
 type Team =
-    | Team1 = 1
-    | Team2 = 2
+    | BVB = 1
+    | ADESSO = 2
 
 type Player = { Team: Team; Number: int }
 

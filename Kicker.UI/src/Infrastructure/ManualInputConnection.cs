@@ -9,13 +9,13 @@ namespace Kicker.UI.Infrastructure
     {
         private Game _game;
         private readonly Subject<IConnectionEvent> _events = new();
-        private readonly Domain.Player _playerTeam1 = new(Team.Team1, 1);
-        private readonly Domain.Player _playerTeam2 = new(Team.Team2, 1);
+        private readonly Domain.Player _bvb_player = new(Team.BVB, 1);
+        private readonly Domain.Player _adesso_player = new(Team.ADESSO, 1);
 
         public override void _UnhandledInput(InputEvent @event)
         {
             var key = (@event as InputEventKey)?.Shift ?? false;
-            var player = key ? _playerTeam2 : _playerTeam1;
+            var player = key ? _adesso_player : _bvb_player;
             
             if (@event.IsActionPressed("ui_up"))
             {

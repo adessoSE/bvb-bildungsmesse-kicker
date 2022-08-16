@@ -76,7 +76,7 @@ internal class GameInstance
                 var value = get(col, row, Game);
                 var s = value switch
                 {
-                    TileValue.PlayerTile player => $" {(player.Item.Team == Team.Team1 ? '1' : '2')}{player.Item.Number} ",
+                    TileValue.PlayerTile player => $" {(player.Item.Team == Team.BVB ? '1' : '2')}{player.Item.Number} ",
                     var ball when ball.IsBallTile => " [] ",
                     var x when x.IsOutTile => " XX ",
                     _ => "    "
