@@ -12,7 +12,6 @@ public class GameService
     private Game.Game _game;
     private Game.GameState _currentState;
     private Subject<Game.GameNotification> _subject;
-    private IObservable<Game.GameNotification> _observable;
 
     public GameService()
     {
@@ -44,7 +43,7 @@ public class GameService
             Notify(Game.GameNotification.NewMoveNotification(result));
         }
 
-        return result;
+        return await Task.FromResult(result);
     }
 
     private void Notify(Game.GameNotification notification)
@@ -62,6 +61,16 @@ public class GameService
         lock (_syncLock)
         {
             _game = Game.create(_currentState.Settings);
+            _currentState = Game.getState(_game);
+            Notify(Game.GameNotification.NewState(_currentState));
+        }
+    }
+
+    public void Reset(GameSettings settings)
+    {
+        lock (_syncLock)
+        {
+            _game = Game.create(settings);
             _currentState = Game.getState(_game);
             Notify(Game.GameNotification.NewState(_currentState));
         }

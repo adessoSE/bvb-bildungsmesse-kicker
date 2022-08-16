@@ -1,9 +1,40 @@
 ﻿@page "/"
+@using Domain
+@using Kicker.Server.GameServer
+@inject GameService service
 
-<PageTitle>Index</PageTitle>
+<PageTitle>admin tool</PageTitle>
 
-<h1>Hello, world!</h1>
+<button class="btn btn-primary mb-4" @onclick="OnResetClicked">zurücksetzen</button>
 
-Welcome to your new app.
+<div>
+    <div class="mb-2 mt-3">
+        <p>Spielfeldhöhe</p>
+        <input type="number" @bind-value="fieldHeight">
+    </div>
+    <div>
+        <p hidden=@isHidden>@error</p>
+        <button class="btn btn-primary" @onclick="OnResetWithChangesClicked">zurücksetzen mit Änderungen</button>
+    </div>
+</div>
 
-<SurveyPrompt Title="How is Blazor working for you?"/>
+@code {
+    private void OnResetClicked()
+    {
+        service.Reset();
+    }
+
+    private int fieldHeight;
+    private string error = "invalid input, fieldheight must be divisible by 3 and not by 2";
+    private bool isHidden = true;
+    private void OnResetWithChangesClicked()
+    {
+        if (fieldHeight >= 9 && fieldHeight % 3 == 0 && fieldHeight % 2 == 1)
+        {
+            GameSettings settings = GameSettings.create(fieldHeight,fieldHeight / 3);
+            service.Reset(settings);
+            fieldHeight = 0;
+            if (!isHidden) isHidden = !isHidden;
+        } else isHidden = !isHidden;
+    }
+}
