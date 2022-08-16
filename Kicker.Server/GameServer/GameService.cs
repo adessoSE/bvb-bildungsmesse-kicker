@@ -1,7 +1,6 @@
 using System.Reactive.Subjects;
 using System.Threading.Channels;
 using Kicker.Domain;
-
 using static Kicker.Domain.GameModule;
 
 namespace Kicker.Server.GameServer;
@@ -12,8 +11,7 @@ public class GameService
 
     private Game _game;
     private GameState _currentState;
-    private Subject<GameNotification> _subject;
-    private IObservable<GameNotification> _observable;
+    private readonly Subject<GameNotification> _subject;
 
     public GameService()
     {
@@ -45,7 +43,7 @@ public class GameService
             Notify(GameNotification.NewMoveNotification(result));
         }
 
-        return result;
+        return await Task.FromResult(result);
     }
 
     private void Notify(GameNotification notification)
@@ -68,6 +66,16 @@ public class GameService
         }
     }
 
+    public void Reset(GameSettings settings)
+    {
+        lock (_syncLock)
+        {
+            _game = create(settings);
+            _currentState = getState(_game);
+            Notify(GameNotification.NewState(_currentState));
+        }
+    }
+
     public void Subscribe(ChannelWriter<GameNotification> writer, CancellationToken cancellationToken)
     {
         lock (_syncLock)
@@ -78,6 +86,7 @@ public class GameService
              {
                  if (!writer.TryWrite(notification))
                  {
+                     // ReSharper disable once AccessToModifiedClosure
                      subscription?.Dispose();
                  }
              });
@@ -86,6 +95,7 @@ public class GameService
              registration = cancellationToken.Register(() =>
              {
                  subscription.Dispose();
+                 // ReSharper disable once AccessToModifiedClosure
                  registration.Dispose();
              });
         }
