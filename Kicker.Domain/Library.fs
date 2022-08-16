@@ -25,9 +25,6 @@ module Game =
         tiles[2, 2] <- PlayerTile { Team = Team.BVB; Number = 1 }
         tiles[2, 3] <- PlayerTile { Team = Team.BVB; Number = 2 }
         tiles[2, 4] <- PlayerTile { Team = Team.BVB; Number = 3 }
-        tiles[2, 5] <- PlayerTile { Team = Team.BVB; Number = 4 }
-        tiles[2, 6] <- PlayerTile { Team = Team.BVB; Number = 5 }
-        tiles[2, 7] <- PlayerTile { Team = Team.BVB; Number = 6 }
 
         tiles[11, 2] <- PlayerTile { Team = Team.ADESSO; Number = 1 }
         tiles[11, 3] <- PlayerTile { Team = Team.ADESSO; Number = 2 }
