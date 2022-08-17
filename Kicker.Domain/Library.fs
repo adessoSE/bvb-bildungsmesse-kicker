@@ -203,20 +203,27 @@ module Game =
             Goal (moved, player)
         | x -> x
 
-    let togglePause (game: Game) =
-        match game.Status with
-        | StoppedWithGoal
-        | StoppedByAdmin -> game.Status <- Running
-        | Running -> game.Status <- StoppedByAdmin
-        
+    let private toggleGameStatus (game:Game) =
+        if game.Status = StoppedByAdmin then
+            game.Status <- Running
+            Resumed
+        elif game.Status = Running then
+            game.Status <- StoppedByAdmin
+            Paused
+        else
+            Ignored
+            
     let processCommand command (game: Game) =
         match game.Status with
         | Running ->
             match command with
             | Move (player, direction) -> move player direction game |> checkGoal player game
             | Kick player -> kick player game |> checkGoal player game
+            | TogglePause -> toggleGameStatus game
         | StoppedWithGoal ->
             Ignored
         | StoppedByAdmin ->
-            Ignored
+            match command with
+            | TogglePause -> toggleGameStatus game
+            | _ -> Ignored
             

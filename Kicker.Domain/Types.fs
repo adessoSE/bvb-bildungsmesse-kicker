@@ -63,10 +63,13 @@ type CommandResult =
     | Ignored
     | BlockedByObstacle
     | PlayerNotFound
+    | Paused
+    | Resumed
     | Moved of MovedObject list
     | Goal of (MovedObject list * Player)
 
 type GameCommand =
+    | TogglePause
     | Move of Player * Direction
     | Kick of Player
     
