@@ -204,15 +204,15 @@ module Game =
         | x -> x
 
     let private toggleGameStatus (game:Game) =
-        if game.Status = StoppedByAdmin then
+        match game.Status with
+        | StoppedByAdmin ->
             game.Status <- Running
             Resumed
-        elif game.Status = Running then
+        | Running ->
             game.Status <- StoppedByAdmin
             Paused
-        else
-            Ignored
-            
+        | _ -> Ignored
+        
     let processCommand command (game: Game) =
         match game.Status with
         | Running ->
