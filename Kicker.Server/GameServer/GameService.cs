@@ -80,10 +80,7 @@ public class GameService
     {
         lock (_syncLock)
         {
-            var newGameStatus = _currentState.Status == GameStatus.Running
-                ? GameStatus.StoppedByAdmin
-                : GameStatus.Running;
-            adminTogglesGameStatus(_game, newGameStatus);
+            togglePause(_game);
         }
     }
 

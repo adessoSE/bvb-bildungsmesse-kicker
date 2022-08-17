@@ -203,11 +203,12 @@ module Game =
             Goal (moved, player)
         | x -> x
 
-    let adminTogglesGameStatus (game: Game, currentStatus: GameStatus) =
-        match currentStatus with
-            | StoppedWithGoal
-            | _ -> game.Status <- currentStatus
-
+    let togglePause (game: Game) =
+        match game.Status with
+        | StoppedWithGoal
+        | StoppedByAdmin -> game.Status <- Running
+        | Running -> game.Status <- StoppedByAdmin
+        
     let processCommand command (game: Game) =
         match game.Status with
         | Running ->
