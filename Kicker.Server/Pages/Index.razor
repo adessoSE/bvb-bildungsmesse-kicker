@@ -1,7 +1,7 @@
 ﻿@page "/"
 @using Domain
 @using Kicker.Server.GameServer
-@inject GameService service
+@inject GameService Service
 
 <PageTitle>admin tool</PageTitle>
 
@@ -10,42 +10,46 @@
 <div>
     <div class="mb-2 mt-3">
         <p>Spielfeldhöhe</p>
-        <input type="number" @bind-value="fieldHeight">
+        <input type="number" @bind-value="_fieldHeight">
     </div>
     <div>
-        <p hidden=@isHidden>@error</p>
+        <p hidden="@_isHidden">@Error</p>
         <button class="btn btn-primary" @onclick="OnResetWithChangesClicked">zurücksetzen mit Änderungen</button>
     </div>
 </div>
 
-<button class="btn btn-primary mt-4" @onclick="OnStopGameClicked">@stopButtonContent</button>
+<button class="btn btn-primary mt-4" @onclick="OnStopGameClicked">@_stopButtonContent</button>
 
 @code {
+
     private void OnResetClicked()
     {
-        service.Reset();
+        Service.Reset();
     }
 
-    private int fieldHeight;
-    private string error = "invalid input, fieldheight must be divisible by 3 and not by 2";
-    private bool isHidden = true;
+    private int _fieldHeight;
+    private bool _isHidden = true;
+        private const string Error = "invalid input, fieldheight must be divisible by 3 and not by 2";
+
     private void OnResetWithChangesClicked()
     {
-        if (fieldHeight >= 9 && fieldHeight % 3 == 0 && fieldHeight % 2 == 1)
+        if (_fieldHeight >= 9 && _fieldHeight % 3 == 0 && _fieldHeight % 2 == 1)
         {
-            GameSettings settings = GameSettings.create(fieldHeight,fieldHeight / 3);
-            service.Reset(settings);
-            fieldHeight = 0;
-            if (!isHidden) isHidden = !isHidden;
-        } else isHidden = !isHidden;
+            var settings = GameSettings.create(_fieldHeight, _fieldHeight / 3);
+            Service.Reset(settings);
+            _fieldHeight = 0;
+            if (!_isHidden) _isHidden = !_isHidden;
+        }
+        else _isHidden = !_isHidden;
     }
 
-    private bool gameRunning = true;
-    private string stopButtonContent = "Spiel stoppen";
-    private void OnStopGameClicked()
+    private string _stopButtonContent = "Spiel pausieren";
+
+    private async Task OnStopGameClicked()
     {
-        gameRunning = !gameRunning;
-        stopButtonContent = gameRunning ? "Spiel stoppen" : "Spiel weiter";
-        service.ToggleGame();
+        var commandResult = await Service.Process(GameCommand.TogglePause);
+        
+        if (commandResult.Equals(CommandResult.Paused)) _stopButtonContent = "Spiel starten";
+        else if (commandResult.Equals(CommandResult.Resumed)) _stopButtonContent = "Spiel pausieren";
     }
 }
