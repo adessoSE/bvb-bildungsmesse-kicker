@@ -51,9 +51,9 @@ public class GameService
         _subject.OnNext(notification);
     }
 
-    public async Task Process(GameCommand command)
+    public Task<CommandResult> Process(GameCommand command)
     {
-        await Update(game => processCommand(command, game));
+        return Update(game => processCommand(command, game));
     }
 
     public void Reset()
@@ -73,14 +73,6 @@ public class GameService
             _game = create(settings);
             _currentState = getState(_game);
             Notify(GameNotification.NewState(_currentState));
-        }
-    }
-
-    public void ToggleGame()
-    {
-        lock (_syncLock)
-        {
-            togglePause(_game);
         }
     }
 
