@@ -22,13 +22,13 @@ module Game =
         addOut 0
         addOut (settings.FieldWidth - 1)
 
-        tiles[2, 2] <- PlayerTile { Team = Team.Team1; Number = 1 }
-        tiles[2, 3] <- PlayerTile { Team = Team.Team1; Number = 2 }
-        tiles[2, 4] <- PlayerTile { Team = Team.Team1; Number = 3 }
+        tiles[2, 2] <- PlayerTile { Team = Team.BVB; Number = 1 }
+        tiles[2, 3] <- PlayerTile { Team = Team.BVB; Number = 2 }
+        tiles[2, 4] <- PlayerTile { Team = Team.BVB; Number = 3 }
 
-        tiles[11, 2] <- PlayerTile { Team = Team.Team2; Number = 1 }
-        tiles[11, 3] <- PlayerTile { Team = Team.Team2; Number = 2 }
-        tiles[11, 4] <- PlayerTile { Team = Team.Team2; Number = 3 }
+        tiles[11, 2] <- PlayerTile { Team = Team.ADESSO; Number = 1 }
+        tiles[11, 3] <- PlayerTile { Team = Team.ADESSO; Number = 2 }
+        tiles[11, 4] <- PlayerTile { Team = Team.ADESSO; Number = 3 }
 
         tiles[8, 3] <- BallTile
 
@@ -202,12 +202,28 @@ module Game =
             game.Status <- StoppedWithGoal
             Goal (moved, player)
         | x -> x
-            
+
+    let private toggleGameStatus (game:Game) =
+        match game.Status with
+        | StoppedByAdmin ->
+            game.Status <- Running
+            Resumed
+        | Running ->
+            game.Status <- StoppedByAdmin
+            Paused
+        | _ -> Ignored
+        
     let processCommand command (game: Game) =
         match game.Status with
         | Running ->
             match command with
             | Move (player, direction) -> move player direction game |> checkGoal player game
             | Kick player -> kick player game |> checkGoal player game
+            | TogglePause -> toggleGameStatus game
         | StoppedWithGoal ->
             Ignored
+        | StoppedByAdmin ->
+            match command with
+            | TogglePause -> toggleGameStatus game
+            | _ -> Ignored
+            

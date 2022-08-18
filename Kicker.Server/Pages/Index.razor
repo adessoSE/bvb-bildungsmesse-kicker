@@ -1,7 +1,9 @@
 ﻿@page "/"
 @using Domain
 @using Kicker.Server.GameServer
-@inject GameService service
+@using System.Reactive.Linq
+@inject GameService Service
+@implements IDisposable
 
 <PageTitle>admin tool</PageTitle>
 
@@ -10,31 +12,93 @@
 <div>
     <div class="mb-2 mt-3">
         <p>Spielfeldhöhe</p>
-        <input type="number" @bind-value="fieldHeight">
+        <input type="number" @bind-value="_fieldHeight">
     </div>
     <div>
-        <p hidden=@isHidden>@error</p>
+        <p hidden="@_isHidden">@Error</p>
         <button class="btn btn-primary" @onclick="OnResetWithChangesClicked">zurücksetzen mit Änderungen</button>
     </div>
 </div>
 
+<button class="btn btn-primary mt-4" @onclick="OnStopGameClicked">@(_isPaused ? "Continue" : "Pause")</button>
+
 @code {
+
     private void OnResetClicked()
     {
-        service.Reset();
+        Service.Reset();
     }
 
-    private int fieldHeight;
-    private string error = "invalid input, fieldheight must be divisible by 3 and not by 2";
-    private bool isHidden = true;
+    private const string Error = "invalid input, fieldheight must be divisible by 3 and not by 2";
+
+    private int _fieldHeight;
+    private bool _isHidden = true;
+    private IDisposable? _subscription;
+    private bool _isPaused;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        _subscription = Service.Notifications
+            .ObserveOn(SynchronizationContext.Current!)
+            .Subscribe(HandleNotification);
+    }
+
+    private void HandleNotification(GameNotification notification)
+    {
+        switch (notification)
+        {
+            case GameNotification.State state:
+                HandleState(state);
+                break;
+            case GameNotification.ResultNotification resultNotification:
+                HandleResult(resultNotification.Item);
+                break;
+        }
+
+        StateHasChanged();
+    }
+
+    private void HandleResult(CommandResult result)
+    {
+        switch (result)
+        {
+            case CommandResult.Moved:
+                break;
+            case var _ when result.IsPaused:
+                _isPaused = true;
+                break;
+            case var _ when result.IsResumed:
+                _isPaused = false;
+                break;
+        }
+    }
+
+    private bool HandleState(GameNotification.State state)
+    {
+        return _isPaused = state.Item.Status.Equals(GameStatus.StoppedByAdmin);
+    }
+
     private void OnResetWithChangesClicked()
     {
-        if (fieldHeight >= 9 && fieldHeight % 3 == 0 && fieldHeight % 2 == 1)
+        if (_fieldHeight >= 9 && _fieldHeight % 3 == 0 && _fieldHeight % 2 == 1)
         {
-            GameSettings settings = GameSettings.create(fieldHeight,fieldHeight / 3);
-            service.Reset(settings);
-            fieldHeight = 0;
-            if (!isHidden) isHidden = !isHidden;
-        } else isHidden = !isHidden;
+            var settings = GameSettings.create(_fieldHeight, _fieldHeight / 3);
+            Service.Reset(settings);
+            _fieldHeight = 0;
+            if (!_isHidden) _isHidden = !_isHidden;
+        }
+        else _isHidden = !_isHidden;
+    }
+    
+    private async Task OnStopGameClicked()
+    {
+        await Service.Process(GameCommand.TogglePause);
+    }
+
+    public void Dispose()
+    {
+        _subscription?.Dispose();
     }
 }

@@ -21,8 +21,8 @@ type GameSettings with
     member this.goalBottom = this.goalTop + this.GoalHeight
 
 type Team =
-    | Team1 = 1
-    | Team2 = 2
+    | BVB = 1
+    | ADESSO = 2
 
 type Player = { Team: Team; Number: int }
 
@@ -35,6 +35,7 @@ type TileValue =
 type GameStatus =
     | Running
     | StoppedWithGoal
+    | StoppedByAdmin
 
 type Coordinate = int * int
 
@@ -62,13 +63,16 @@ type CommandResult =
     | Ignored
     | BlockedByObstacle
     | PlayerNotFound
+    | Paused
+    | Resumed
     | Moved of MovedObject list
     | Goal of (MovedObject list * Player)
 
 type GameCommand =
+    | TogglePause
     | Move of Player * Direction
     | Kick of Player
     
 type GameNotification =
     | State of GameState
-    | MoveNotification of CommandResult
+    | ResultNotification of CommandResult

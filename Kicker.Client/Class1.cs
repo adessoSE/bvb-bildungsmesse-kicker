@@ -1,13 +1,12 @@
 ﻿using Kicker.Domain;
 using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.DependencyInjection;
-using static Kicker.Domain.Game;
 
 namespace Kicker.Client;
 
 internal class KickerHubClient
 {
-    private HubConnection _connection;
+    private HubConnection? _connection;
 
     public static KickerHubClient CreateAndConnect()
     {
@@ -28,7 +27,8 @@ internal class KickerHubClient
 
     public void SendCommand(GameCommand command)
     {
-        _connection.SendAsync("Command", command).Wait();
+        if (_connection is null) Connect();
+        else _connection.SendAsync("Command", command).Wait();
     }
 }
 
@@ -39,25 +39,25 @@ public static class KickerClient
 
     public static void MoveLeft()
     {
-        Client.SendCommand(GameCommand.NewMove(new Player(Team.Team1, 1), Direction.Left));
+        Client.SendCommand(GameCommand.NewMove(new Player(Team.BVB, 1), Direction.Left));
         Thread.Sleep(200);
     }
 
     public static void MoveRight()
     {
-        Client.SendCommand(GameCommand.NewMove(new Player(Team.Team1, 1), Direction.Right));
+        Client.SendCommand(GameCommand.NewMove(new Player(Team.BVB, 1), Direction.Right));
         Thread.Sleep(200);
     }
 
     public static void MoveDown()
     {
-        Client.SendCommand(GameCommand.NewMove(new Player(Team.Team1, 1), Direction.Down));
+        Client.SendCommand(GameCommand.NewMove(new Player(Team.BVB, 1), Direction.Down));
         Thread.Sleep(200);
     }
 
     public static void MoveUp()
     {
-        Client.SendCommand(GameCommand.NewMove(new Player(Team.Team1, 1), Direction.Up));
+        Client.SendCommand(GameCommand.NewMove(new Player(Team.BVB, 1), Direction.Up));
         Thread.Sleep(200);
     }
 }
