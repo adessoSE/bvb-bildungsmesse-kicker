@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Threading.Channels;
 using Kicker.Domain;
 using Microsoft.AspNetCore.SignalR;
@@ -23,7 +24,26 @@ public class GameHub : Hub
         var channel = Channel.CreateUnbounded<GameNotification>();
         var writer = channel.Writer;
         
-        _gameService.Subscribe(writer, cancellationToken);
+        IDisposable? subscription = null;
+        CancellationTokenRegistration registration = default;
+
+        [SuppressMessage("ReSharper", "AccessToModifiedClosure")]
+        void CancelSubscription()
+        {
+            subscription?.Dispose();
+            registration.Dispose();
+        }
+        
+        subscription = _gameService.Notifications.Subscribe(notification =>
+        {
+            if (!writer.TryWrite(notification))
+            {
+                CancelSubscription();
+            }
+        });
+        
+        registration = cancellationToken.Register(CancelSubscription);
+        
         return channel.Reader;
     }
 }

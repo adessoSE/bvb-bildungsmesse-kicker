@@ -75,4 +75,4 @@ type GameCommand =
     
 type GameNotification =
     | State of GameState
-    | MoveNotification of CommandResult
+    | ResultNotification of CommandResult

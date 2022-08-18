@@ -1,7 +1,9 @@
 ﻿@page "/"
 @using Domain
 @using Kicker.Server.GameServer
+@using System.Reactive.Linq
 @inject GameService Service
+@implements IDisposable
 
 <PageTitle>admin tool</PageTitle>
 
@@ -18,7 +20,7 @@
     </div>
 </div>
 
-<button class="btn btn-primary mt-4" @onclick="OnStopGameClicked">@_stopButtonContent</button>
+<button class="btn btn-primary mt-4" @onclick="OnStopGameClicked">@(_isPaused ? "Continue" : "Pause")</button>
 
 @code {
 
@@ -27,9 +29,56 @@
         Service.Reset();
     }
 
+    private const string Error = "invalid input, fieldheight must be divisible by 3 and not by 2";
+
     private int _fieldHeight;
     private bool _isHidden = true;
-        private const string Error = "invalid input, fieldheight must be divisible by 3 and not by 2";
+    private IDisposable? _subscription;
+    private bool _isPaused;
+
+    protected override void OnInitialized()
+    {
+        base.OnInitialized();
+
+        _subscription = Service.Notifications
+            .ObserveOn(SynchronizationContext.Current!)
+            .Subscribe(HandleNotification);
+    }
+
+    private void HandleNotification(GameNotification notification)
+    {
+        switch (notification)
+        {
+            case GameNotification.State state:
+                HandleState(state);
+                break;
+            case GameNotification.ResultNotification resultNotification:
+                HandleResult(resultNotification.Item);
+                break;
+        }
+
+        StateHasChanged();
+    }
+
+    private void HandleResult(CommandResult result)
+    {
+        switch (result)
+        {
+            case CommandResult.Moved:
+                break;
+            case var _ when result.IsPaused:
+                _isPaused = true;
+                break;
+            case var _ when result.IsResumed:
+                _isPaused = false;
+                break;
+        }
+    }
+
+    private bool HandleState(GameNotification.State state)
+    {
+        return _isPaused = state.Item.Status.Equals(GameStatus.StoppedByAdmin);
+    }
 
     private void OnResetWithChangesClicked()
     {
@@ -42,14 +91,14 @@
         }
         else _isHidden = !_isHidden;
     }
-
-    private string _stopButtonContent = "Spiel pausieren";
-
+    
     private async Task OnStopGameClicked()
     {
-        var commandResult = await Service.Process(GameCommand.TogglePause);
-        
-        if (commandResult.Equals(CommandResult.Paused)) _stopButtonContent = "Spiel starten";
-        else if (commandResult.Equals(CommandResult.Resumed)) _stopButtonContent = "Spiel pausieren";
+        await Service.Process(GameCommand.TogglePause);
+    }
+
+    public void Dispose()
+    {
+        _subscription?.Dispose();
     }
 }

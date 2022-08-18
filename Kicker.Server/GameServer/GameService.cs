@@ -1,5 +1,5 @@
+using System.Reactive.Linq;
 using System.Reactive.Subjects;
-using System.Threading.Channels;
 using Kicker.Domain;
 using static Kicker.Domain.GameModule;
 
@@ -31,7 +31,9 @@ public class GameService
             }
         }
     }
-    
+
+    public IObservable<GameNotification> Notifications => CreateObservable();
+
     private async Task<CommandResult> Update(Func<Game, CommandResult> update)
     {
         CommandResult? result;
@@ -40,7 +42,7 @@ public class GameService
         {
             result = update(_game);
             _currentState = getState(_game);
-            Notify(GameNotification.NewMoveNotification(result));
+            Notify(GameNotification.NewResultNotification(result));
         }
 
         return await Task.FromResult(result);
@@ -76,28 +78,16 @@ public class GameService
         }
     }
 
-    public void Subscribe(ChannelWriter<GameNotification> writer, CancellationToken cancellationToken)
+    private IObservable<GameNotification> CreateObservable()
     {
-        lock (_syncLock)
+        return Observable.Create<GameNotification>(subscriber =>
         {
-             writer.TryWrite(GameNotification.NewState(_currentState));
-             IDisposable? subscription = null;
-             subscription = _subject.Subscribe(notification =>
-             {
-                 if (!writer.TryWrite(notification))
-                 {
-                     // ReSharper disable once AccessToModifiedClosure
-                     subscription?.Dispose();
-                 }
-             });
-             
-             var registration = new CancellationTokenRegistration();
-             registration = cancellationToken.Register(() =>
-             {
-                 subscription.Dispose();
-                 // ReSharper disable once AccessToModifiedClosure
-                 registration.Dispose();
-             });
-        }
+            lock (_syncLock)
+            {
+                var current = GameNotification.NewState(_currentState);
+                var subscription = _subject.StartWith(current).Subscribe(subscriber);
+                return subscription;
+            }
+        });
     }
 }
