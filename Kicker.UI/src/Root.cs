@@ -30,7 +30,7 @@ namespace Kicker.UI
 				connectionEvents
 					.OfType<ConnectionEvent.Notification>()
 					.Select(n => n.Payload)
-					.OfType<GameNotification.MoveNotification>()
+					.OfType<GameNotification.ResultNotification>()
 					.Select(m => m.Item);
 
 			void OnNext(IConnectionEvent x)
