@@ -11,5 +11,5 @@ dest_files=[ "res://.import/kick_test.mp3-aa30caee5fce66f744fd912a88e3666f.mp3st
 
 [params]
 
-loop=true
+loop=false
 loop_offset=0

@@ -22,6 +22,9 @@ namespace Kicker.UI
 		private UiSettings _settings;
 		private IDisposable _subscription;
 
+		[Signal]
+		public delegate void goal();
+
 		protected override void Dispose(bool disposing)
 		{
 			base.Dispose(disposing);
@@ -49,6 +52,8 @@ namespace Kicker.UI
 			AddChild(ball);
 			
 			_subscription = _commandResultObservable.Subscribe(HandleResult);
+
+			
 		}
 
 		private GameState _initialState;

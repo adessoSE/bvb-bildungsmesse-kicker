@@ -34,6 +34,7 @@ type TileValue =
 
 type GameStatus =
     | Running
+    | NotRunning
     | StoppedWithGoal
     | StoppedByAdmin
 
@@ -47,7 +48,8 @@ type GameState =
     { Settings: GameSettings
       Players: PlayerState array
       BallPosition: Coordinate
-      Status: GameStatus }
+      Status: GameStatus
+      PreviousStatus: GameStatus }
 
 type Direction =
     | Up = 0

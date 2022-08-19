@@ -11,5 +11,5 @@ dest_files=[ "res://.import/jubel_test.mp3-8012adb71f4dc1f57ac3069044f71020.mp3s
 
 [params]
 
-loop=true
+loop=false
 loop_offset=0

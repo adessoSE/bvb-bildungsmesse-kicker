@@ -12,6 +12,10 @@ namespace Kicker.UI
 	public class Root : Node2D
 	{
 		private IDisposable _subscription;
+		
+		[Signal]
+		public delegate void goal();
+		
 
 		protected override void Dispose(bool disposing)
 		{
@@ -98,7 +102,7 @@ namespace Kicker.UI
 			container.RectScale = Vector2.One * UiSettings.PixelFactor;
 
 			var game = GameRoot.Create(state, observable).Named("GameRoot");
-			viewport.AddChild(game);
+			viewport.AddChild(game);			
 
 			if (!Engine.EditorHint)
 			{

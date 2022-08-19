@@ -42,11 +42,7 @@ namespace Kicker.UI.Infrastructure
 		private void Handle(GameCommand gameCommand)
 		{
 			var result = GameModule.processCommand(gameCommand, _game);
-<<<<<<< Updated upstream
 			_events.OnNext(new ConnectionEvent.Notification(GameNotification.NewResultNotification(result)));
-=======
-			_events.OnNext(new ConnectionEvent.Notification(GameNotification.NewMoveNotification(result)));
->>>>>>> Stashed changes
 		}
 
 		private void Reset()
