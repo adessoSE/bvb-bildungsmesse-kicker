@@ -69,7 +69,7 @@ type CommandResult =
     | Resumed
     | Moved of MovedObject list
     | Goal of (MovedObject list * Player)
-
+    
 type GameCommand =
     | TogglePause
     | Move of Player * Direction
@@ -77,4 +77,4 @@ type GameCommand =
     
 type GameNotification =
     | State of GameState
-    | ResultNotification of CommandResult
+    | ResultNotification of (GameCommand * CommandResult)

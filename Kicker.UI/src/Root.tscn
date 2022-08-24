@@ -1,7 +1,6 @@
-[gd_scene load_steps=5 format=2]
+[gd_scene load_steps=4 format=2]
 
 [ext_resource path="res://assets/BlurShader.shader" type="Shader" id=1]
-[ext_resource path="res://src/AudioPlayer.cs" type="Script" id=2]
 [ext_resource path="res://src/Root.cs" type="Script" id=3]
 
 [sub_resource type="ShaderMaterial" id=3]
@@ -27,7 +26,3 @@ material = SubResource( 3 )
 anchor_right = 1.0
 anchor_bottom = 1.0
 color = Color( 0.541176, 0.196078, 0.196078, 1 )
-
-[node name="AudioStreamPlayer" type="AudioStreamPlayer" parent="."]
-volume_db = 5.0
-script = ExtResource( 2 )

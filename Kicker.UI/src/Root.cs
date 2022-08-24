@@ -13,10 +13,6 @@ namespace Kicker.UI
 	{
 		private IDisposable _subscription;
 		
-		[Signal]
-		public delegate void goal();
-		
-
 		protected override void Dispose(bool disposing)
 		{
 			base.Dispose(disposing);
@@ -35,7 +31,7 @@ namespace Kicker.UI
 					.OfType<ConnectionEvent.Notification>()
 					.Select(n => n.Payload)
 					.OfType<GameNotification.ResultNotification>()
-					.Select(m => m.Item);
+					.Select(m => m.Item.ToValueTuple());
 
 			void OnNext(IConnectionEvent x)
 			{
@@ -66,7 +62,7 @@ namespace Kicker.UI
 			IObservable<IConnectionEvent> connection =
 				Engine.EditorHint
 					? new MockConnection()
-					: new ServerConnection();
+					: new ManualInputConnection();
 
 			if (connection is Node node)
 			{
@@ -82,7 +78,7 @@ namespace Kicker.UI
 			game?.QueueFree();
 		}
 
-		private void InitializeGame(GameState state, IObservable<CommandResult> observable)
+		private void InitializeGame(GameState state, IObservable<(GameCommand, CommandResult)> observable)
 		{
 			var uiSettings = state.Settings.ToUiSettings();
 

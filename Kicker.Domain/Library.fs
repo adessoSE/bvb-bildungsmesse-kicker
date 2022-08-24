@@ -187,9 +187,12 @@ module Game =
                         | _ -> coordinate
 
                 let target = whileEmptyGo 4 start
-                game |> set start EmptyTile
-                game |> set target BallTile
-                Moved [ MovedBall target ]
+                if target <> start then
+                    game |> set start EmptyTile
+                    game |> set target BallTile
+                    Moved [ MovedBall target ]
+                else
+                    BlockedByObstacle
             | _ -> BlockedByObstacle
         | None -> PlayerNotFound
 
