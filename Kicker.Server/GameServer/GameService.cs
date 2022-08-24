@@ -1,21 +1,28 @@
 using System.Reactive.Linq;
 using System.Reactive.Subjects;
 using Kicker.Domain;
+using Microsoft.Extensions.Options;
 using static Kicker.Domain.GameModule;
 
 namespace Kicker.Server.GameServer;
 
 public class GameService
 {
+    private readonly IOptionsMonitor<GameConfiguration> _configuration;
+    private readonly ILogger<GameService> _logger;
     private readonly object _syncLock = new();
 
     private Game _game;
     private GameState _currentState;
     private readonly Subject<GameNotification> _subject;
 
-    public GameService()
+    public GameService(IOptionsMonitor<GameConfiguration> configuration, ILogger<GameService> logger)
     {
-        _game = create(GameSettings.defaultSettings);
+        _configuration = configuration;
+        _logger = logger;
+        var mappings = configuration.CurrentValue.Players.ToDictionary();
+        var settings = GameSettings.defaultSettings.withPlayerMapping(mappings);
+        _game = create(settings);
         _currentState = getState(_game);
 
         _subject = new Subject<GameNotification>();
@@ -34,18 +41,32 @@ public class GameService
 
     public IObservable<GameNotification> Notifications => CreateObservable();
 
-    private async Task<CommandResult> Update(Func<Game, CommandResult> update)
+    private async Task<CommandResult> Update(string logDescription, Func<Game, CommandResult> update)
     {
         CommandResult? result;
-        
+
         lock (_syncLock)
         {
             result = update(_game);
+            _logger.LogDebug("Update: {LogDescription} => {Result}", logDescription, result);
             _currentState = getState(_game);
-            Notify(GameNotification.NewResultNotification(result));
+            if (ShouldSend(result))
+            {
+                Notify(GameNotification.NewResultNotification(result));
+            }
         }
 
         return await Task.FromResult(result);
+    }
+
+    private static bool ShouldSend(CommandResult result)
+    {
+        return result switch
+        {
+            {IsIgnored: true} => false,
+            {IsPlayerNotFound: true} => false,
+            _ => true
+        };
     }
 
     private void Notify(GameNotification notification)
@@ -55,7 +76,12 @@ public class GameService
 
     public Task<CommandResult> Process(GameCommand command)
     {
-        return Update(game => processCommand(command, game));
+        return Update(command.ToString(), game => processCommand(command, game));
+    }
+    
+    public Task<CommandResult> Process(string key, ClientCommand command)
+    {
+        return Update($"{key}/{command}", game => processClientCommand(key, command, game));
     }
 
     public void Reset()
@@ -70,6 +96,9 @@ public class GameService
 
     public void Reset(GameSettings settings)
     {
+        var mappings = _configuration.CurrentValue.Players.ToDictionary();
+        settings = settings.withPlayerMapping(mappings);
+        
         lock (_syncLock)
         {
             _game = create(settings);

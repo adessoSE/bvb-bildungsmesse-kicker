@@ -1,3 +1,4 @@
+using Kicker.Server;
 using Kicker.Server.GameServer;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -7,6 +8,8 @@ builder.Services.AddRazorPages();
 builder.Services.AddServerSideBlazor();
 builder.Services.AddSingleton<GameService>();
 builder.Services.AddSignalR().AddNewtonsoftJsonProtocol();
+
+builder.Services.AddOptions<GameConfiguration>().Bind(builder.Configuration.GetSection("Game"));
 
 var app = builder.Build();
 

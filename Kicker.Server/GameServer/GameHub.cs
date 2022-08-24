@@ -1,4 +1,5 @@
 using System.Diagnostics.CodeAnalysis;
+using System.Net;
 using System.Threading.Channels;
 using Kicker.Domain;
 using Microsoft.AspNetCore.SignalR;
@@ -14,9 +15,10 @@ public class GameHub : Hub
         _gameService = gameService;
     }
     
-    public async Task Command(GameCommand command)
+    public async Task Command(ClientCommand command)
     {
-        await _gameService.Process(command);
+        var key = Context.GetHttpContext()?.Connection.RemoteIpAddress ?? IPAddress.None;
+        await _gameService.Process(key.ToString(), command);
     }
     
     public ChannelReader<GameNotification> Subscribe(CancellationToken cancellationToken)
