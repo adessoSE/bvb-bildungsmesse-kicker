@@ -235,10 +235,14 @@ module Game =
         | _ -> Ignored
             
     let processClientCommand key command (game: Game) =
-        match game.Settings.PlayerMapping |> Map.tryFind key with
-        | Some player ->
-            match command with
-            | ClientMove direction -> Move (player, direction)
-            | ClientKick -> Kick player
-            |> (fun c -> processCommand c game)
-        | None -> CommandResult.PlayerNotFound
+        let player = game.Settings.PlayerMapping
+                     |> Map.tryFind key
+                     |> Option.defaultValue {Player.Team = Team.BVB; Number = 0}
+                     
+        match command with
+        | ClientMove direction -> Move (player, direction)
+        | ClientKick -> Kick player
+        |> (fun c ->
+                let result = processCommand c game
+                (c, result))
+        
