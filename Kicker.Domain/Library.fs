@@ -234,3 +234,11 @@ module Game =
             | _ -> Ignored
         | _ -> Ignored
             
+    let processClientCommand key command (game: Game) =
+        match game.Settings.PlayerMapping |> Map.tryFind key with
+        | Some player ->
+            match command with
+            | ClientMove direction -> Move (player, direction)
+            | ClientKick -> Kick player
+            |> (fun c -> processCommand c game)
+        | None -> CommandResult.PlayerNotFound

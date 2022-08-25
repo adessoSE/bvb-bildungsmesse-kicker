@@ -1,6 +1,5 @@
 using Kicker.Client;
 using Kicker.Domain;
-using static Kicker.Domain.Game;
 
 namespace Kicker.Tests;
 
@@ -12,7 +11,7 @@ public class GameTests
     {
         _game = new GameInstance(output);
     }
-
+    
     [Fact]
     public void Go()
     {
@@ -20,7 +19,6 @@ public class GameTests
         Client.KickerClient.MoveRight();
         Client.KickerClient.MoveRight();
         Client.KickerClient.MoveRight();
-
     }
 
     [Fact]

@@ -1,9 +1,18 @@
 namespace Kicker.Domain
 
+open System.Collections.Generic
+
+type Team =
+    | BVB = 1
+    | ADESSO = 2
+
+type Player = { Team: Team; Number: int }
+
 type GameSettings =
     { FieldHeight: int
       FieldWidth: int
-      GoalHeight: int }
+      GoalHeight: int
+      PlayerMapping: Map<string, Player> }
     
 type GameSettings with
     static member create fieldHeight goalHeight =
@@ -15,16 +24,13 @@ type GameSettings with
         
         { FieldHeight = fieldHeight
           FieldWidth = fieldWidth
-          GoalHeight = goalHeight }
+          GoalHeight = goalHeight
+          PlayerMapping = Map.empty }
     static member defaultSettings = GameSettings.create 9 3
     member this.goalTop = (this.FieldHeight - this.GoalHeight) / 2
     member this.goalBottom = this.goalTop + this.GoalHeight
-
-type Team =
-    | BVB = 1
-    | ADESSO = 2
-
-type Player = { Team: Team; Number: int }
+    member this.withPlayerMapping (mapping: IReadOnlyDictionary<string, Player>) =
+        { this with PlayerMapping = mapping |> Seq.map(|KeyValue|) |> Map.ofSeq }
 
 type TileValue =
     | EmptyTile
@@ -74,6 +80,10 @@ type GameCommand =
     | TogglePause
     | Move of Player * Direction
     | Kick of Player
+    
+type ClientCommand =
+    | ClientMove of Direction
+    | ClientKick
     
 type GameNotification =
     | State of GameState
