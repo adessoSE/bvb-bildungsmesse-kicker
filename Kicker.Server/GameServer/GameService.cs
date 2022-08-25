@@ -41,22 +41,20 @@ public class GameService
 
     public IObservable<GameNotification> Notifications => CreateObservable();
 
-    private async Task<CommandResult> Update(string logDescription, Func<Game, CommandResult> update)
+    private Task<CommandResult> Update(string logDescription, Func<Game, (GameCommand, CommandResult)> update)
     {
-        CommandResult? result;
-
         lock (_syncLock)
         {
-            result = update(_game);
+            var result = update(_game);
             _logger.LogDebug("Update: {LogDescription} => {Result}", logDescription, result);
             _currentState = getState(_game);
-            if (ShouldSend(result))
+            if (ShouldSend(result.Item2))
             {
-                Notify(GameNotification.NewResultNotification(result));
+                Notify(GameNotification.NewResultNotification(result.ToTuple()));
             }
-        }
 
-        return await Task.FromResult(result);
+            return Task.FromResult(result.Item2);
+        }
     }
 
     private static bool ShouldSend(CommandResult result)
@@ -76,12 +74,12 @@ public class GameService
 
     public Task<CommandResult> Process(GameCommand command)
     {
-        return Update(command.ToString(), game => processCommand(command, game));
+        return Update(command.ToString(), game => (command, processCommand(command, game)));
     }
     
     public Task<CommandResult> Process(string key, ClientCommand command)
     {
-        return Update($"{key}/{command}", game => processClientCommand(key, command, game));
+        return Update($"{key}/{command}", game => processClientCommand(key, command, game).ToValueTuple());
     }
 
     public void Reset()

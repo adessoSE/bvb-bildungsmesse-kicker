@@ -12,7 +12,7 @@ namespace Kicker.UI
 	public class Root : Node2D
 	{
 		private IDisposable _subscription;
-
+		
 		protected override void Dispose(bool disposing)
 		{
 			base.Dispose(disposing);
@@ -31,7 +31,7 @@ namespace Kicker.UI
 					.OfType<ConnectionEvent.Notification>()
 					.Select(n => n.Payload)
 					.OfType<GameNotification.ResultNotification>()
-					.Select(m => m.Item);
+					.Select(m => m.Item.ToValueTuple());
 
 			void OnNext(IConnectionEvent x)
 			{
@@ -62,7 +62,7 @@ namespace Kicker.UI
 			IObservable<IConnectionEvent> connection =
 				Engine.EditorHint
 					? new MockConnection()
-					: new ServerConnection();
+					: new ManualInputConnection();
 
 			if (connection is Node node)
 			{
@@ -78,7 +78,7 @@ namespace Kicker.UI
 			game?.QueueFree();
 		}
 
-		private void InitializeGame(GameState state, IObservable<CommandResult> observable)
+		private void InitializeGame(GameState state, IObservable<(GameCommand, CommandResult)> observable)
 		{
 			var uiSettings = state.Settings.ToUiSettings();
 
@@ -98,7 +98,7 @@ namespace Kicker.UI
 			container.RectScale = Vector2.One * UiSettings.PixelFactor;
 
 			var game = GameRoot.Create(state, observable).Named("GameRoot");
-			viewport.AddChild(game);
+			viewport.AddChild(game);			
 
 			if (!Engine.EditorHint)
 			{

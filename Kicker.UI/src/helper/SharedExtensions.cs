@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Godot;
 using Kicker.Domain;
 
@@ -42,5 +43,9 @@ namespace Kicker.UI
 		}
 
 		public static Vector2 ToVector2(this Tuple<int, int> tuple) => new Vector2(tuple.Item1, tuple.Item2);
+
+		private static readonly Random _random = new();
+
+		public static T Random<T>(this IReadOnlyList<T> items) => items[_random.Next(items.Count)];
 	}
 }

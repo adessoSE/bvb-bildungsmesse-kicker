@@ -42,7 +42,8 @@ namespace Kicker.UI.Infrastructure
 		private void Handle(GameCommand gameCommand)
 		{
 			var result = GameModule.processCommand(gameCommand, _game);
-			_events.OnNext(new ConnectionEvent.Notification(GameNotification.NewResultNotification(result)));
+			var notification = GameNotification.NewResultNotification(Tuple.Create(gameCommand, result));
+			_events.OnNext(new ConnectionEvent.Notification(notification));
 		}
 
 		private void Reset()

@@ -1,3 +1,4 @@
+using Kicker.Client;
 using Kicker.Domain;
 
 namespace Kicker.Tests;
@@ -18,6 +19,25 @@ public class GameTests
         Client.KickerClient.MoveRight();
         Client.KickerClient.MoveRight();
         Client.KickerClient.MoveRight();
+    }
+
+    [Fact]
+    public void Test()
+    {
+        for (int i = 0; i < 6; i++)
+        {
+            KickerClient.MoveRight();
+        }
+        
+        KickerClient.MoveDown();
+        KickerClient.MoveDown();
+        KickerClient.MoveLeft();
+        KickerClient.MoveDown();
+        
+        for (int i = 0; i < 7; i++)
+        {
+            KickerClient.MoveRight();
+        }
     }
     
     [Fact]

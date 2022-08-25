@@ -6,7 +6,7 @@ namespace Kicker.UI
 	public class UiSettings
 	{
 		public GameSettings GameSettings { get; }
-		public const int PixelsPerTile = 20;
+		public const int PixelsPerTile = 24;
 		public const int PixelFactor = 8;
 
 		public UiSettings(GameSettings settings)

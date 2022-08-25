@@ -6,7 +6,8 @@ type Game =
     private
         { Tiles: TileValue [,]
           Settings: GameSettings
-          mutable Status: GameStatus }
+          mutable Status: GameStatus
+          mutable PreviousStatus: GameStatus }
 
 module Game =    
     let create (settings: GameSettings) =
@@ -32,7 +33,7 @@ module Game =
 
         tiles[8, 3] <- BallTile
 
-        { Tiles = tiles; Settings = settings; Status = Running }
+        { Tiles = tiles; Settings = settings; Status = Running; PreviousStatus = NotRunning }
 
     let directions =
         [ Direction.Left
@@ -118,7 +119,8 @@ module Game =
         { GameState.Settings = game.Settings
           Players = players |> Seq.toArray
           BallPosition = ballPos
-          Status = game.Status }
+          Status = game.Status
+          PreviousStatus = game.PreviousStatus }
 
     let private move (player: Player) direction game =
         let coordinate = game |> find (PlayerTile player)
@@ -185,9 +187,12 @@ module Game =
                         | _ -> coordinate
 
                 let target = whileEmptyGo 4 start
-                game |> set start EmptyTile
-                game |> set target BallTile
-                Moved [ MovedBall target ]
+                if target <> start then
+                    game |> set start EmptyTile
+                    game |> set target BallTile
+                    Moved [ MovedBall target ]
+                else
+                    BlockedByObstacle
             | _ -> BlockedByObstacle
         | None -> PlayerNotFound
 
@@ -200,6 +205,7 @@ module Game =
         match result with
         | Moved moved when moved |> List.exists ballInGoal ->
             game.Status <- StoppedWithGoal
+            game.PreviousStatus <- Running
             Goal (moved, player)
         | x -> x
 
@@ -207,9 +213,11 @@ module Game =
         match game.Status with
         | StoppedByAdmin ->
             game.Status <- Running
+            game.PreviousStatus <- StoppedByAdmin
             Resumed
         | Running ->
             game.Status <- StoppedByAdmin
+            game.PreviousStatus <- Running
             Paused
         | _ -> Ignored
         
@@ -220,18 +228,21 @@ module Game =
             | Move (player, direction) -> move player direction game |> checkGoal player game
             | Kick player -> kick player game |> checkGoal player game
             | TogglePause -> toggleGameStatus game
-        | StoppedWithGoal ->
-            Ignored
         | StoppedByAdmin ->
             match command with
             | TogglePause -> toggleGameStatus game
             | _ -> Ignored
-
+        | _ -> Ignored
+            
     let processClientCommand key command (game: Game) =
-        match game.Settings.PlayerMapping |> Map.tryFind key with
-        | Some player ->
-            match command with
-            | ClientMove direction -> Move (player, direction)
-            | ClientKick -> Kick player
-            |> (fun c -> processCommand c game)
-        | None -> CommandResult.PlayerNotFound
+        let player = game.Settings.PlayerMapping
+                     |> Map.tryFind key
+                     |> Option.defaultValue {Player.Team = Team.BVB; Number = 0}
+                     
+        match command with
+        | ClientMove direction -> Move (player, direction)
+        | ClientKick -> Kick player
+        |> (fun c ->
+                let result = processCommand c game
+                (c, result))
+        

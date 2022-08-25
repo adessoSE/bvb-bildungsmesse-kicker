@@ -11,16 +11,21 @@ namespace Kicker.UI
 	{
 		private static readonly Load.Factory<GameRoot> Factory = Load.Scene<GameRoot>();
 
-		public static GameRoot Create(GameState state, IObservable<CommandResult> moveObservable) => Factory(g =>
+		public static GameRoot Create(GameState state, IObservable<(GameCommand, CommandResult)> moveObservable) => 
+			Factory(g =>
+			{
+				g._initialState = state;
+				g._commandResultObservable = moveObservable;
+			});
+
+		private GameRoot()
 		{
-			g._initialState = state;
-			g._commandResultObservable = moveObservable;
-		});
-		
-		private GameRoot(){}
+		}
 
 		private UiSettings _settings;
 		private IDisposable _subscription;
+
+		public AudioPlayer AudioPlayer => GetNode<AudioPlayer>("AudioPlayer");
 
 		protected override void Dispose(bool disposing)
 		{
@@ -52,7 +57,7 @@ namespace Kicker.UI
 		}
 
 		private GameState _initialState;
-		private IObservable<CommandResult> _commandResultObservable;
+		private IObservable<(GameCommand, CommandResult)> _commandResultObservable;
 
 		private static int GetY(MovedObject movedObject) =>
 			movedObject switch
@@ -62,7 +67,7 @@ namespace Kicker.UI
 				_ => 0
 			};
 		
-		private void HandleResult(CommandResult result)
+		private void HandleResult((GameCommand Command, CommandResult Result) outcome)
 		{
 			void HandleMoved(IEnumerable<MovedObject> moved)
 			{
@@ -89,14 +94,26 @@ namespace Kicker.UI
 				}
 			}
 			
-			switch (result)
+			switch (outcome.Result)
 			{
 				case CommandResult.Goal goal:
 					HandleMoved(goal.Item.Item1);
+					AudioPlayer.PlayKickHard();
+					AudioPlayer.PlayJubel();
 					break;
 				
 				case CommandResult.Moved moved:
+					var ballMoved = moved.Item.Any(o => o.IsMovedBall);
 					HandleMoved(moved.Item);
+					if (outcome.Command.IsKick)
+					{
+						AudioPlayer.PlayKickHard();
+					}
+					else
+					{
+						AudioPlayer.PlayRunning(!ballMoved);
+					}
+
 					break;
 			}
 		}

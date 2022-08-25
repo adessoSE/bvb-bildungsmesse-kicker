@@ -4,7 +4,7 @@ namespace Kicker.Server;
 
 public class GameConfiguration
 {
-    public PlayerMapping Players { get; set; }
+    public PlayerMapping Players { get; set; } = new();
     
     public class PlayerMapping
     {

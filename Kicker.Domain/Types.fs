@@ -40,6 +40,7 @@ type TileValue =
 
 type GameStatus =
     | Running
+    | NotRunning
     | StoppedWithGoal
     | StoppedByAdmin
 
@@ -53,7 +54,8 @@ type GameState =
     { Settings: GameSettings
       Players: PlayerState array
       BallPosition: Coordinate
-      Status: GameStatus }
+      Status: GameStatus
+      PreviousStatus: GameStatus }
 
 type Direction =
     | Up = 0
@@ -73,7 +75,7 @@ type CommandResult =
     | Resumed
     | Moved of MovedObject list
     | Goal of (MovedObject list * Player)
-
+    
 type GameCommand =
     | TogglePause
     | Move of Player * Direction
@@ -85,4 +87,4 @@ type ClientCommand =
     
 type GameNotification =
     | State of GameState
-    | ResultNotification of CommandResult
+    | ResultNotification of (GameCommand * CommandResult)
