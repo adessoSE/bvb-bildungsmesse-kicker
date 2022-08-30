@@ -13,4 +13,5 @@ public static class KickerClient
     public static void MoveRight() => Move(Direction.Right);
     public static void MoveUp() => Move(Direction.Up);
     public static void MoveDown() => Move(Direction.Down);
+    public static void Kick() => Client.SendCommand(ClientCommand.ClientKick);
 }

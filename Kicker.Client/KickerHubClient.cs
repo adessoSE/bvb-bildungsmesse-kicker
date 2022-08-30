@@ -17,9 +17,11 @@ internal class KickerHubClient
     
     private void Connect()
     {
+        var kickerServer = Environment.GetEnvironmentVariable("KICKER_SERVER") ?? "localhost";
+        
         _connection = new HubConnectionBuilder()
             .AddNewtonsoftJsonProtocol()
-            .WithUrl("http://localhost:7014/gamehub")
+            .WithUrl($"http://{kickerServer}:7014/gamehub")
             .Build();
 
         _connection.StartAsync().Wait();

@@ -1,5 +1,6 @@
 using Kicker.Client;
 using Kicker.Domain;
+using Kicker.Client;
 
 namespace Kicker.Tests;
 
@@ -15,10 +16,10 @@ public class GameTests
     [Fact]
     public void Go()
     {
-        Client.KickerClient.MoveRight();
-        Client.KickerClient.MoveRight();
-        Client.KickerClient.MoveRight();
-        Client.KickerClient.MoveRight();
+        KickerClient.MoveRight();
+        KickerClient.MoveRight();
+        KickerClient.MoveRight();
+        KickerClient.MoveRight();
     }
 
     [Fact]
