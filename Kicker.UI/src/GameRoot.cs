@@ -100,6 +100,10 @@ namespace Kicker.UI
 					HandleMoved(goal.Item.Item1);
 					AudioPlayer.PlayKickHard();
 					AudioPlayer.PlayJubel();
+					
+					var root = GetParent<Viewport>().GetParent<ViewportContainer>().GetParent<Root>();
+					root.ToggleLabel();
+					
 					break;
 				
 				case CommandResult.Moved moved:

@@ -1,11 +1,11 @@
 [gd_scene load_steps=4 format=2]
 
-[ext_resource path="res://assets/BlurShader.shader" type="Shader" id=1]
+[ext_resource path="res://assets/Pixel Digivolve.otf" type="DynamicFontData" id=2]
 [ext_resource path="res://src/Root.cs" type="Script" id=3]
 
-[sub_resource type="ShaderMaterial" id=3]
-shader = ExtResource( 1 )
-shader_param/blur_amount = 3.25
+[sub_resource type="DynamicFont" id=1]
+size = 30
+font_data = ExtResource( 2 )
 
 [node name="Root" type="Node2D"]
 script = ExtResource( 3 )
@@ -20,9 +20,13 @@ size = Vector2( 360, 216 )
 handle_input_locally = false
 render_target_update_mode = 3
 
-[node name="Blur" type="ColorRect" parent="ViewportContainer"]
+[node name="Tor" type="Label" parent="."]
 visible = false
-material = SubResource( 3 )
-anchor_right = 1.0
-anchor_bottom = 1.0
-color = Color( 0.541176, 0.196078, 0.196078, 1 )
+modulate = Color( 1, 1, 1, 0.85098 )
+margin_left = 917.0
+margin_top = 522.0
+margin_right = 989.0
+margin_bottom = 558.0
+rect_scale = Vector2( 15, 15 )
+custom_fonts/font = SubResource( 1 )
+text = "Tor!"

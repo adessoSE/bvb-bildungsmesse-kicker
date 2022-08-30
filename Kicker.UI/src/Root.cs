@@ -13,6 +13,8 @@ namespace Kicker.UI
 	{
 		private IDisposable _subscription;
 		
+		private Label label => GetNode<Label>("Tor");
+
 		protected override void Dispose(bool disposing)
 		{
 			base.Dispose(disposing);
@@ -56,13 +58,18 @@ namespace Kicker.UI
 					.Do(OnNext)
 					.Subscribe();
 		}
+
+		public void ToggleLabel()
+		{
+			label.Visible = !label.Visible;
+		}
 		
 		private IObservable<IConnectionEvent> CreateConnection()
 		{
 			IObservable<IConnectionEvent> connection =
 				Engine.EditorHint
 					? new MockConnection()
-					: new ServerConnection();
+					: new ManualInputConnection();
 
 			if (connection is Node node)
 			{
