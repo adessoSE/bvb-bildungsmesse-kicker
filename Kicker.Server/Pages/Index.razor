@@ -15,12 +15,62 @@
         <input type="number" @bind-value="_fieldHeight">
     </div>
     <div>
-        <p hidden="@_isHidden">@Error</p>
-        <button class="btn btn-primary" @onclick="OnResetWithChangesClicked">zurücksetzen mit Änderungen</button>
+        <button class="btn btn-primary" @onclick="OnResetWithChangesClicked">Reset</button>
     </div>
 </div>
 
 <button class="btn btn-primary mt-4" @onclick="OnStopGameClicked">@(_isPaused ? "Continue" : "Pause")</button>
+
+<p>
+    <image src="Blau-01.png" style="width: 20px; height: 40px;" />
+    <input type="checkbox" @bind="_adessoPlayers[0]"/>
+</p>
+
+<p>
+    <image src="Blau-02.png" style="width: 20px; height: 40px;" />
+    <input type="checkbox" @bind="_adessoPlayers[1]"/>
+</p>
+
+<p>
+    <image src="Blau-03.png" style="width: 20px; height: 40px;" />
+    <input type="checkbox" @bind="_adessoPlayers[2]"/>
+</p>
+
+<p>
+    <image src="Blau-04.png" style="width: 20px; height: 40px;" />
+    <input type="checkbox" @bind="_adessoPlayers[3]"/>
+</p>
+
+<p>
+    <image src="Blau-05.png" style="width: 20px; height: 40px;" />
+    <input type="checkbox" @bind="_adessoPlayers[4]"/>
+</p>
+
+<p>
+    <image src="Gelb-01.png" style="width: 20px; height: 40px;" />
+    <input type="checkbox" @bind="_bvbPlayers[0]"/>
+</p>
+
+<p>
+    <image src="Gelb-02.png" style="width: 20px; height: 40px;" />
+    <input type="checkbox" @bind="_bvbPlayers[1]"/>
+</p>
+
+<p>
+    <image src="Gelb-03.png" style="width: 20px; height: 40px;" />
+    <input type="checkbox" @bind="_bvbPlayers[2]"/>
+</p>
+
+<p>
+    <image src="Gelb-04.png" style="width: 20px; height: 40px;" />
+    <input type="checkbox" @bind="_bvbPlayers[3]"/>
+</p>
+
+<p>
+    <image src="Gelb-05.png" style="width: 20px; height: 40px;" />
+    <input type="checkbox" @bind="_bvbPlayers[4]"/>
+</p>
+
 
 @code {
 
@@ -28,13 +78,12 @@
     {
         Service.Reset();
     }
-
-    private const string Error = "invalid input, fieldheight must be divisible by 3 and not by 2";
-
-    private int _fieldHeight;
-    private bool _isHidden = true;
+    
+    private int _fieldHeight = 9;
     private IDisposable? _subscription;
     private bool _isPaused;
+    private bool[] _adessoPlayers = new bool[5];
+    private bool[] _bvbPlayers = new bool[5];
 
     protected override void OnInitialized()
     {
@@ -82,14 +131,16 @@
 
     private void OnResetWithChangesClicked()
     {
-        if (_fieldHeight >= 9 && _fieldHeight % 3 == 0 && _fieldHeight % 2 == 1)
-        {
-            var settings = GameSettings.create(_fieldHeight, _fieldHeight / 3);
-            Service.Reset(settings);
-            _fieldHeight = 0;
-            if (!_isHidden) _isHidden = !_isHidden;
-        }
-        else _isHidden = !_isHidden;
+        IEnumerable<Player> GetPlayers(IEnumerable<bool> p, Team team) => 
+            p.Select((b, i) => (b,i)).Where(x => x.b).Select(x => new Player(team, x.i + 1));
+
+        var adessoPlayers = GetPlayers(_adessoPlayers, Team.ADESSO);
+        var bvbPlayers = GetPlayers(_bvbPlayers, Team.BVB);
+        
+        var players = adessoPlayers.Concat(bvbPlayers);
+        var settings = GameSettings.create(_fieldHeight, 3).withPlayers(players);
+        
+        Service.Reset(settings);
     }
     
     private async Task OnStopGameClicked()

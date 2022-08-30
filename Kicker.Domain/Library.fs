@@ -23,15 +23,21 @@ module Game =
         addOut 0
         addOut (settings.FieldWidth - 1)
 
-        tiles[2, 2] <- PlayerTile { Team = Team.BVB; Number = 1 }
-        tiles[2, 3] <- PlayerTile { Team = Team.BVB; Number = 2 }
-        tiles[2, 4] <- PlayerTile { Team = Team.BVB; Number = 3 }
-
-        tiles[11, 2] <- PlayerTile { Team = Team.ADESSO; Number = 1 }
-        tiles[11, 3] <- PlayerTile { Team = Team.ADESSO; Number = 2 }
-        tiles[11, 4] <- PlayerTile { Team = Team.ADESSO; Number = 3 }
-
-        tiles[8, 3] <- BallTile
+        
+        let setTeam team col =
+            let players = settings.Players |> Seq.filter (fun p -> p.Team = team) |> Seq.toArray
+            let count = players.Length
+            let center = settings.FieldHeight / 2
+            let half = count / 2
+            for i in 0..(half - 1) do
+                tiles[col, center - 1 - i] <- PlayerTile players[i]
+            for i in half..(count - 1) do
+                tiles[col, center + 2 * half - i] <- PlayerTile players[i]
+        
+        setTeam Team.BVB (settings.FieldWidth / 2 - 2)
+        setTeam Team.ADESSO (settings.FieldWidth / 2 + 2)
+        
+        tiles[settings.FieldWidth / 2, settings.FieldHeight / 2] <- BallTile
 
         { Tiles = tiles; Settings = settings; Status = Running; PreviousStatus = NotRunning }
 

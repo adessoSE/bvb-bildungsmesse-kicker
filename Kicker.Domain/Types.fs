@@ -12,6 +12,7 @@ type GameSettings =
     { FieldHeight: int
       FieldWidth: int
       GoalHeight: int
+      Players: Player list
       PlayerMapping: Map<string, Player> }
     
 type GameSettings with
@@ -25,12 +26,18 @@ type GameSettings with
         { FieldHeight = fieldHeight
           FieldWidth = fieldWidth
           GoalHeight = goalHeight
+          Players = [
+              for i in 1..5 do yield { Player.Team = Team.ADESSO; Number = i }
+              for i in 1..5 do yield { Player.Team = Team.BVB; Number = i }
+          ]
           PlayerMapping = Map.empty }
     static member defaultSettings = GameSettings.create 9 3
     member this.goalTop = (this.FieldHeight - this.GoalHeight) / 2
     member this.goalBottom = this.goalTop + this.GoalHeight
     member this.withPlayerMapping (mapping: IReadOnlyDictionary<string, Player>) =
         { this with PlayerMapping = mapping |> Seq.map(|KeyValue|) |> Map.ofSeq }
+    member this.withPlayers (players: Player seq) =
+        { this with Players = players |> Seq.toList }
 
 type TileValue =
     | EmptyTile
