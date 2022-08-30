@@ -1,5 +1,5 @@
 [<RequireQualifiedAccess>]
-module private Kicker.Domain.Utils
+module Kicker.Domain.Utils
 
 let find2D item (arr: 'T [,]) =
     let rec go x y =
