@@ -1,6 +1,5 @@
 using Kicker.Client;
 using Kicker.Domain;
-using Kicker.Client;
 
 namespace Kicker.Tests;
 

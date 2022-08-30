@@ -59,9 +59,9 @@ namespace Kicker.UI
 					.Subscribe();
 		}
 
-		public void ToggleLabel()
+		public void SetLabelVisibility(bool b)
 		{
-			label.Visible = !label.Visible;
+			label.Visible = b;
 		}
 		
 		private IObservable<IConnectionEvent> CreateConnection()
@@ -69,7 +69,7 @@ namespace Kicker.UI
 			IObservable<IConnectionEvent> connection =
 				Engine.EditorHint
 					? new MockConnection()
-					: new ManualInputConnection();
+					: new ServerConnection();
 
 			if (connection is Node node)
 			{

@@ -27,6 +27,8 @@ namespace Kicker.UI
 
 		public AudioPlayer AudioPlayer => GetNode<AudioPlayer>("AudioPlayer");
 
+		private Root _root => GetParent<Viewport>().GetParent<ViewportContainer>().GetParent<Root>();
+
 		protected override void Dispose(bool disposing)
 		{
 			base.Dispose(disposing);
@@ -36,6 +38,8 @@ namespace Kicker.UI
 		public override void _Ready()
 		{
 			base._Ready();
+
+			_root.SetLabelVisibility(false);
 
 			_settings = _initialState.Settings.ToUiSettings();
 
@@ -101,8 +105,7 @@ namespace Kicker.UI
 					AudioPlayer.PlayKickHard();
 					AudioPlayer.PlayJubel();
 					
-					var root = GetParent<Viewport>().GetParent<ViewportContainer>().GetParent<Root>();
-					root.ToggleLabel();
+					_root.SetLabelVisibility(true);
 					
 					break;
 				
