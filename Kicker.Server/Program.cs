@@ -27,4 +27,4 @@ app.MapHub<GameHub>("/gamehub");
 app.MapBlazorHub();
 app.MapFallbackToPage("/_Host");
 
-app.Run();
+app.Run("http://0.0.0.0:7014");

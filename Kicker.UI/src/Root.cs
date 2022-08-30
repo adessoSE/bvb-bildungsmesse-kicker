@@ -62,7 +62,7 @@ namespace Kicker.UI
 			IObservable<IConnectionEvent> connection =
 				Engine.EditorHint
 					? new MockConnection()
-					: new ManualInputConnection();
+					: new ServerConnection();
 
 			if (connection is Node node)
 			{
