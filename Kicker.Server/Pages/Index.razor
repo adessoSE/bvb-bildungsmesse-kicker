@@ -23,64 +23,67 @@
 
 <hr>
 
-<button class="btn btn-primary mt-3" @onclick="OnStopGameClicked">@(_isPaused ? "Continue" : "Pause")</button>
+<div>
+    <button class="btn btn-primary mt-3 mb-2" @onclick="OnStopGameClicked">@(_isPaused ? "Continue" : "Pause")</button>
 
-<div class="mt-4 mb-4">
-    <p>Waitduration</p>
-    <input type="number" @bind="Speed"  />
+    <span>
+        <p>Waitduration</p>
+        <input type="number" @bind="Speed"  />
+    </span>
 </div>
 
 
+<div class="mt-4">
+    <p>
+        <image src="Blau-01.png" style="width: 20px; height: 40px;" />
+        <input type="checkbox" @bind="_adessoPlayers[0]"/>
+    </p>
 
-<p>
-    <image src="Blau-01.png" style="width: 20px; height: 40px;" />
-    <input type="checkbox" @bind="_adessoPlayers[0]"/>
-</p>
+    <p>
+        <image src="Blau-02.png" style="width: 20px; height: 40px;" />
+        <input type="checkbox" @bind="_adessoPlayers[1]"/>
+    </p>
 
-<p>
-    <image src="Blau-02.png" style="width: 20px; height: 40px;" />
-    <input type="checkbox" @bind="_adessoPlayers[1]"/>
-</p>
+    <p>
+        <image src="Blau-03.png" style="width: 20px; height: 40px;" />
+        <input type="checkbox" @bind="_adessoPlayers[2]"/>
+    </p>
 
-<p>
-    <image src="Blau-03.png" style="width: 20px; height: 40px;" />
-    <input type="checkbox" @bind="_adessoPlayers[2]"/>
-</p>
+    <p>
+        <image src="Blau-04.png" style="width: 20px; height: 40px;" />
+        <input type="checkbox" @bind="_adessoPlayers[3]"/>
+    </p>
 
-<p>
-    <image src="Blau-04.png" style="width: 20px; height: 40px;" />
-    <input type="checkbox" @bind="_adessoPlayers[3]"/>
-</p>
+    <p>
+        <image src="Blau-05.png" style="width: 20px; height: 40px;" />
+        <input type="checkbox" @bind="_adessoPlayers[4]"/>
+    </p>
 
-<p>
-    <image src="Blau-05.png" style="width: 20px; height: 40px;" />
-    <input type="checkbox" @bind="_adessoPlayers[4]"/>
-</p>
+    <p>
+        <image src="Gelb-01.png" style="width: 20px; height: 40px;" />
+        <input type="checkbox" @bind="_bvbPlayers[0]"/>
+    </p>
 
-<p>
-    <image src="Gelb-01.png" style="width: 20px; height: 40px;" />
-    <input type="checkbox" @bind="_bvbPlayers[0]"/>
-</p>
+    <p>
+        <image src="Gelb-02.png" style="width: 20px; height: 40px;" />
+        <input type="checkbox" @bind="_bvbPlayers[1]"/>
+    </p>
 
-<p>
-    <image src="Gelb-02.png" style="width: 20px; height: 40px;" />
-    <input type="checkbox" @bind="_bvbPlayers[1]"/>
-</p>
+    <p>
+        <image src="Gelb-03.png" style="width: 20px; height: 40px;" />
+        <input type="checkbox" @bind="_bvbPlayers[2]"/>
+    </p>
 
-<p>
-    <image src="Gelb-03.png" style="width: 20px; height: 40px;" />
-    <input type="checkbox" @bind="_bvbPlayers[2]"/>
-</p>
+    <p>
+        <image src="Gelb-04.png" style="width: 20px; height: 40px;" />
+        <input type="checkbox" @bind="_bvbPlayers[3]"/>
+    </p>
 
-<p>
-    <image src="Gelb-04.png" style="width: 20px; height: 40px;" />
-    <input type="checkbox" @bind="_bvbPlayers[3]"/>
-</p>
-
-<p>
-    <image src="Gelb-05.png" style="width: 20px; height: 40px;" />
-    <input type="checkbox" @bind="_bvbPlayers[4]"/>
-</p>
+    <p>
+        <image src="Gelb-05.png" style="width: 20px; height: 40px;" />
+        <input type="checkbox" @bind="_bvbPlayers[4]"/>
+    </p>
+</div>
 
 
 @code {
@@ -167,5 +170,11 @@
     {
         get => (int) (Service.WaitDuration.TotalSeconds * 2);
         set => Service.WaitDuration = TimeSpan.FromSeconds(value / 2.0);
+    }
+
+    private bool AutoReset
+    {
+        get => Service.AutoResetEnabled;
+        set => Service.AutoResetEnabled = value;
     }
 }
