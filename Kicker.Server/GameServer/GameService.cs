@@ -17,7 +17,9 @@ public class GameService
     private readonly Subject<GameNotification> _subject;
     private TimeSpan _waitDuration = TimeSpan.FromSeconds(1);
     private TaskCompletionSource? _pauseTask;
-    
+    private bool _autoResetEnabled = true;
+    private CancellationTokenSource _autoResetCancellation;
+
     public GameService(IOptionsMonitor<GameConfiguration> configuration, ILogger<GameService> logger)
     {
         _configuration = configuration;
@@ -59,6 +61,24 @@ public class GameService
         }
     }
 
+    public bool AutoResetEnabled
+    {
+        get
+        {
+            lock (_syncLock)
+            {
+                return _autoResetEnabled;
+            }
+        }
+        set
+        {
+            lock (_syncLock)
+            {
+                _autoResetEnabled = value;
+            }
+        }
+    }
+
     public Task WaitForPauseAsync()
     {
         lock (_syncLock)
@@ -96,6 +116,22 @@ public class GameService
                 Notify(GameNotification.NewResultNotification(resultTuple.ToTuple()));
             }
 
+            if (result.IsGoal && _autoResetEnabled)
+            {
+                _autoResetCancellation = new CancellationTokenSource();
+                var token = _autoResetCancellation.Token;
+                Task.Run(async () =>
+                {
+                    try
+                    {
+                        await Task.Delay(5000, token);
+                        if (!token.IsCancellationRequested)
+                            Reset();
+                    }
+                    catch (OperationCanceledException){}
+                }, token);
+            }
+            
             return (result, _currentState);
         }
     }
@@ -140,6 +176,7 @@ public class GameService
         
         lock (_syncLock)
         {
+            _autoResetCancellation.Cancel();
             var spielstand = getState(_game).Spielstand;
             _game = create(settings.withSpielstand(spielstand));
             _currentState = getState(_game);

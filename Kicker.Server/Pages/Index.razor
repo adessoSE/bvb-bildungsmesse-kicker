@@ -7,21 +7,30 @@
 
 <PageTitle>admin tool</PageTitle>
 
-<button class="btn btn-primary mb-4" @onclick="Service.Reset">zurücksetzen</button>
-
 <div>
-    <div class="mb-2 mt-3">
-        <p>Spielfeldhöhe</p>
-        <input type="number" @bind-value="_fieldHeight">
-    </div>
+    <button class="btn btn-primary mb-4" @onclick="Service.Reset">zurücksetzen</button>
+
     <div>
-        <button class="btn btn-primary" @onclick="OnResetWithChangesClicked">Reset</button>
+        <span class="mb-3 mt-4">
+            <p>Spielfeldhöhe</p>
+            <input type="number" @bind-value="_fieldHeight">
+        </span>
+        <span>
+            <button class="btn btn-primary" @onclick="OnResetWithChangesClicked">zurücksetzen mit Änderungen</button>
+        </span>
     </div>
 </div>
 
-<button class="btn btn-primary mt-4" @onclick="OnStopGameClicked">@(_isPaused ? "Continue" : "Pause")</button>
+<hr>
 
-<input type="number" @bind="Speed"  />
+<button class="btn btn-primary mt-3" @onclick="OnStopGameClicked">@(_isPaused ? "Continue" : "Pause")</button>
+
+<div class="mt-4 mb-4">
+    <p>Waitduration</p>
+    <input type="number" @bind="Speed"  />
+</div>
+
+
 
 <p>
     <image src="Blau-01.png" style="width: 20px; height: 40px;" />
@@ -154,7 +163,7 @@
         _subscription?.Dispose();
     }
 
-    public int Speed
+    private int Speed
     {
         get => (int) (Service.WaitDuration.TotalSeconds * 2);
         set => Service.WaitDuration = TimeSpan.FromSeconds(value / 2.0);
