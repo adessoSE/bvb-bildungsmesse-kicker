@@ -15,7 +15,9 @@ public class GameService
     private Game _game;
     private GameState _currentState;
     private readonly Subject<GameNotification> _subject;
-
+    private TimeSpan _waitDuration = TimeSpan.FromSeconds(1);
+    private TaskCompletionSource? _pauseTask;
+    
     public GameService(IOptionsMonitor<GameConfiguration> configuration, ILogger<GameService> logger)
     {
         _configuration = configuration;
@@ -39,21 +41,62 @@ public class GameService
         }
     }
 
-    public IObservable<GameNotification> Notifications => CreateObservable();
+    public TimeSpan WaitDuration
+    {
+        get
+        {
+            lock (_syncLock)
+            {
+                return _waitDuration;
+            }
+        }
+        set
+        {
+            lock (_syncLock)
+            {
+                _waitDuration = value;
+            }
+        }
+    }
 
-    private Task<CommandResult> Update(string logDescription, Func<Game, (GameCommand, CommandResult)> update)
+    public Task WaitForPauseAsync()
     {
         lock (_syncLock)
         {
-            var result = update(_game);
-            _logger.LogDebug("Update: {LogDescription} => {Result}", logDescription, result);
-            _currentState = getState(_game);
-            if (ShouldSend(result.Item2))
+            return _pauseTask?.Task ?? Task.CompletedTask;
+        }
+    }
+
+    public IObservable<GameNotification> Notifications => CreateObservable();
+
+    private (CommandResult Result, GameState State) Update(
+        string logDescription, 
+        Func<Game, (GameCommand Command, CommandResult Result)> update)
+    {
+        lock (_syncLock)
+        {
+            var resultTuple = update(_game);
+            var result = resultTuple.Result;
+
+            if (result.IsPaused)
             {
-                Notify(GameNotification.NewResultNotification(result.ToTuple()));
+                _pauseTask = new TaskCompletionSource();
+            }
+            else if (result.IsResumed)
+            {
+                _pauseTask?.TrySetResult();
+            }
+            
+            _logger.LogDebug("Update: {LogDescription} => {Result}", logDescription, resultTuple);
+
+            _currentState = getState(_game);
+            
+            if (ShouldSend(result))
+            {
+                Notify(GameNotification.NewResultNotification(resultTuple.ToTuple()));
             }
 
-            return Task.FromResult(result.Item2);
+            return (result, _currentState);
         }
     }
 
@@ -72,12 +115,12 @@ public class GameService
         _subject.OnNext(notification);
     }
 
-    public Task<CommandResult> Process(GameCommand command)
+    public CommandResult Process(GameCommand command)
     {
-        return Update(command.ToString(), game => (command, processCommand(command, game)));
+        return Update(command.ToString(), game => (command, processCommand(command, game))).Result;
     }
     
-    public Task<CommandResult> Process(string key, ClientCommand command)
+    public (CommandResult Result, GameState State) Process(string key, ClientCommand command)
     {
         return Update($"{key}/{command}", game => processClientCommand(key, command, game).ToValueTuple());
     }

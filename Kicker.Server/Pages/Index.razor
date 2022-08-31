@@ -7,7 +7,7 @@
 
 <PageTitle>admin tool</PageTitle>
 
-<button class="btn btn-primary mb-4" @onclick="OnResetClicked">zurücksetzen</button>
+<button class="btn btn-primary mb-4" @onclick="Service.Reset">zurücksetzen</button>
 
 <div>
     <div class="mb-2 mt-3">
@@ -20,6 +20,8 @@
 </div>
 
 <button class="btn btn-primary mt-4" @onclick="OnStopGameClicked">@(_isPaused ? "Continue" : "Pause")</button>
+
+<input type="number" @bind="Speed"  />
 
 <p>
     <image src="Blau-01.png" style="width: 20px; height: 40px;" />
@@ -73,17 +75,13 @@
 
 
 @code {
-
-    private void OnResetClicked()
-    {
-        Service.Reset();
-    }
     
     private int _fieldHeight = 9;
     private IDisposable? _subscription;
     private bool _isPaused;
-    private bool[] _adessoPlayers = new bool[5];
-    private bool[] _bvbPlayers = new bool[5];
+    
+    private readonly bool[] _adessoPlayers = new bool[5];
+    private readonly bool[] _bvbPlayers = new bool[5];
 
     protected override void OnInitialized()
     {
@@ -92,6 +90,9 @@
         _subscription = Service.Notifications
             .ObserveOn(SynchronizationContext.Current!)
             .Subscribe(HandleNotification);
+
+        _adessoPlayers[0] = true;
+        _bvbPlayers[0] = true;
     }
 
     private void HandleNotification(GameNotification notification)
@@ -143,13 +144,19 @@
         Service.Reset(settings);
     }
     
-    private async Task OnStopGameClicked()
+    private void OnStopGameClicked()
     {
-        await Service.Process(GameCommand.TogglePause);
+        Service.Process(GameCommand.TogglePause);
     }
 
     public void Dispose()
     {
         _subscription?.Dispose();
+    }
+
+    public int Speed
+    {
+        get => (int) (Service.WaitDuration.TotalSeconds * 2);
+        set => Service.WaitDuration = TimeSpan.FromSeconds(value / 2.0);
     }
 }

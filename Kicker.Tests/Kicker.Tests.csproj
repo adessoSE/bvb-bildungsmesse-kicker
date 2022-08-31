@@ -25,6 +25,7 @@
 
     <ItemGroup>
       <ProjectReference Include="..\Kicker.Client\Kicker.Client.csproj" />
+      <ProjectReference Include="..\Kicker.Domain\Kicker.Domain.fsproj" />
     </ItemGroup>
 
 </Project>

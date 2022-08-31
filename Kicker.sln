@@ -8,6 +8,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kicker.Client", "Kicker.Cli
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kicker.Tests", "Kicker.Tests\Kicker.Tests.csproj", "{932EB10E-DBD0-4EA2-97A0-CEC44A7AA5F3}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Kicker.Player", "Kicker.Player\Kicker.Player.csproj", "{01DC2FC6-5677-464C-B332-9990A83E0504}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -30,5 +32,9 @@ Global
 		{932EB10E-DBD0-4EA2-97A0-CEC44A7AA5F3}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{932EB10E-DBD0-4EA2-97A0-CEC44A7AA5F3}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{932EB10E-DBD0-4EA2-97A0-CEC44A7AA5F3}.Release|Any CPU.Build.0 = Release|Any CPU
+		{01DC2FC6-5677-464C-B332-9990A83E0504}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{01DC2FC6-5677-464C-B332-9990A83E0504}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{01DC2FC6-5677-464C-B332-9990A83E0504}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{01DC2FC6-5677-464C-B332-9990A83E0504}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal

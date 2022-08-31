@@ -15,10 +15,18 @@ public class GameHub : Hub
         _gameService = gameService;
     }
     
-    public async Task Command(ClientCommand command)
+    public async Task Command(Guid id, ClientCommand command)
     {
+        await _gameService.WaitForPauseAsync();
+        
         var key = Context.GetHttpContext()?.Connection.RemoteIpAddress ?? IPAddress.None;
-        await _gameService.Process(key.ToString(), command);
+        var (result, state) = _gameService.Process(key.ToString(), command);
+        await Clients.Caller.SendAsync("CommandHandled", id, result);
+
+        if (state.Status.IsRunning)
+        {
+            await Task.Delay(_gameService.WaitDuration);
+        }
     }
     
     public ChannelReader<GameNotification> Subscribe(CancellationToken cancellationToken)
