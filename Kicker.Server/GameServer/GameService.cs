@@ -129,9 +129,7 @@ public class GameService
     {
         lock (_syncLock)
         {
-            _game = create(_currentState.Settings);
-            _currentState = getState(_game);
-            Notify(GameNotification.NewState(_currentState));
+            Reset(_currentState.Settings);
         }
     }
 
@@ -142,7 +140,8 @@ public class GameService
         
         lock (_syncLock)
         {
-            _game = create(settings);
+            var spielstand = getState(_game).Spielstand;
+            _game = create(settings.withSpielstand(spielstand));
             _currentState = getState(_game);
             Notify(GameNotification.NewState(_currentState));
         }
