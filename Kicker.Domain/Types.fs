@@ -8,12 +8,22 @@ type Team =
 
 type Player = { Team: Team; Number: int }
 
+type Spielstand =
+    { ToreBVB: int; ToreAdesso: int }
+    member this.increment team =
+        if team = Team.ADESSO then
+            { ToreBVB = this.ToreBVB; ToreAdesso = this.ToreAdesso + 1 }
+        else
+            { ToreBVB = this.ToreBVB + 1; ToreAdesso = this.ToreAdesso }
+
+
 type GameSettings =
     { FieldHeight: int
       FieldWidth: int
       GoalHeight: int
       Players: Player list
-      PlayerMapping: Map<string, Player> }
+      PlayerMapping: Map<string, Player>
+      Spielstand: Spielstand }
     
 type GameSettings with
     static member create fieldHeight goalHeight =
@@ -30,7 +40,9 @@ type GameSettings with
               for i in 1..5 do yield { Player.Team = Team.ADESSO; Number = i }
               for i in 1..5 do yield { Player.Team = Team.BVB; Number = i }
           ]
-          PlayerMapping = Map.empty }
+          PlayerMapping = Map.empty
+          Spielstand = { ToreBVB = 0; ToreAdesso = 0 } }
+        
     static member defaultSettings = GameSettings.create 9 3
     member this.goalTop = (this.FieldHeight - this.GoalHeight) / 2
     member this.goalBottom = this.goalTop + this.GoalHeight
@@ -38,6 +50,8 @@ type GameSettings with
         { this with PlayerMapping = mapping |> Seq.map(|KeyValue|) |> Map.ofSeq }
     member this.withPlayers (players: Player seq) =
         { this with Players = players |> Seq.toList }
+    member this.withSpielstand (stand: Spielstand) =
+        { this with Spielstand = stand }
 
 type TileValue =
     | EmptyTile
@@ -48,7 +62,7 @@ type TileValue =
 type GameStatus =
     | Running
     | NotRunning
-    | StoppedWithGoal
+    | StoppedWithGoal of Spielstand
     | StoppedByAdmin
 
 type Coordinate = int * int
@@ -62,7 +76,8 @@ type GameState =
       Players: PlayerState array
       BallPosition: Coordinate
       Status: GameStatus
-      PreviousStatus: GameStatus }
+      PreviousStatus: GameStatus
+      Spielstand: Spielstand }
 
 type Direction =
     | Up = 0

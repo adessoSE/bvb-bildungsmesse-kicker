@@ -114,6 +114,11 @@ module Game =
         let mutable players = []
         let mutable ballPos = (0, 0)
 
+        let spielstand =
+            match game.Status with
+            | StoppedWithGoal stand -> stand
+            | _ -> game.Settings.Spielstand
+        
         for col in 0 .. game.Settings.FieldWidth - 1 do
             for row in 0 .. game.Settings.FieldHeight - 1 do
                 match game.Tiles[col, row] with
@@ -126,7 +131,8 @@ module Game =
           Players = players |> Seq.toArray
           BallPosition = ballPos
           Status = game.Status
-          PreviousStatus = game.PreviousStatus }
+          PreviousStatus = game.PreviousStatus
+          Spielstand = spielstand }
 
     let private move (player: Player) direction game =
         let coordinate = game |> find (PlayerTile player)
@@ -204,13 +210,15 @@ module Game =
 
     let private checkGoal player game result =
         let { Game.Settings = { FieldWidth = width } } = game
+                
         let ballInGoal = function
             | MovedBall (col, _) -> col = 0 || col = width - 1
             | _ -> false
             
         match result with
         | Moved moved when moved |> List.exists ballInGoal ->
-            game.Status <- StoppedWithGoal
+            let spielstand = game.Settings.Spielstand.increment player.Team
+            game.Status <- StoppedWithGoal spielstand
             game.PreviousStatus <- Running
             Goal (moved, player)
         | x -> x
