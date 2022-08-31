@@ -24,20 +24,35 @@ public class GameTests
     [Fact]
     public void Test()
     {
-        for (int i = 0; i < 6; i++)
+        for (int i = 0; i < 2; i++)
         {
             KickerClient.MoveRight();
         }
+
+        for (int i = 0; i < 4; i++)
+        {
+            KickerClient.MoveDown();
+        }
         
-        KickerClient.MoveDown();
-        KickerClient.MoveDown();
         KickerClient.MoveLeft();
         KickerClient.MoveDown();
         
-        for (int i = 0; i < 7; i++)
+        for (int i = 0; i < 4; i++)
         {
             KickerClient.MoveRight();
         }
+        
+        KickerClient.MoveDown();
+        KickerClient.MoveRight();
+
+        for (int i = 0; i < 2; i++)
+        {
+            KickerClient.MoveUp();
+        }
+        
+        KickerClient.MoveLeft();
+        KickerClient.MoveUp();
+        KickerClient.Kick();
     }
     
     [Fact]

@@ -63,6 +63,13 @@ namespace Kicker.UI
 		{
 			label.Visible = b;
 		}
+
+		public void UpdateSpielstand(Spielstand s)
+		{
+			Console.WriteLine(s.ToreBVB.ToString(),s.ToreAdesso.ToString());
+			GetNode<Label>("Node2D/DortmundLabel").Text = s.ToreBVB.ToString();
+			GetNode<Label>("Node2D/AdessoLabel").Text = s.ToreAdesso.ToString();
+		}
 		
 		private IObservable<IConnectionEvent> CreateConnection()
 		{

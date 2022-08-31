@@ -24,6 +24,7 @@ namespace Kicker.UI
 
 		private UiSettings _settings;
 		private IDisposable _subscription;
+		private Spielstand _spielstand;
 
 		public AudioPlayer AudioPlayer => GetNode<AudioPlayer>("AudioPlayer");
 
@@ -57,6 +58,9 @@ namespace Kicker.UI
 			ball.Tile = _initialState.BallPosition.ToVector2();
 			AddChild(ball);
 			
+			_spielstand = _initialState.Spielstand;
+			_root.UpdateSpielstand(_spielstand);
+
 			_subscription = _commandResultObservable.Subscribe(HandleResult);
 		}
 
@@ -106,7 +110,7 @@ namespace Kicker.UI
 					AudioPlayer.PlayJubel();
 					
 					_root.SetLabelVisibility(true);
-					
+					_root.UpdateSpielstand(goal.Item.Item3);
 					break;
 				
 				case CommandResult.Moved moved:
