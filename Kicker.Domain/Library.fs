@@ -220,7 +220,7 @@ module Game =
             let spielstand = game.Settings.Spielstand.increment player.Team
             game.Status <- StoppedWithGoal spielstand
             game.PreviousStatus <- Running
-            Goal (moved, player)
+            Goal (moved, player, spielstand)
         | x -> x
 
     let private toggleGameStatus (game:Game) =

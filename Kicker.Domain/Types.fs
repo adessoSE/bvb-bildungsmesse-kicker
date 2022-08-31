@@ -96,7 +96,7 @@ type CommandResult =
     | Paused
     | Resumed
     | Moved of MovedObject list
-    | Goal of (MovedObject list * Player)
+    | Goal of (MovedObject list * Player * Spielstand)
     
 type GameCommand =
     | TogglePause
